@@ -1,0 +1,38 @@
+{
+  "personaId": "0x35b952d3300caacb3d91acb58700c361cdc1e41d051a5f94cfa27815797b5efa",
+  "owner": "0xcB47322a463DAb8e92732547f628D802D33C068e",
+  "metadataCID": "ipfs://QmYAdJSV3hvzrGJUTxg7KuL7jcZ6zcHMUyTf8y3enPgsAg",
+  "signature": "0xdb75e1f658919db8d5ae427e0d8d079242dbce5f9d07acd3d77594536967311b142a9ea9c7346035003b4c55d903807a4dbb84f2e558f83754a4f3561518ea6f1b",
+  "domain": {
+    "name": "MantlePersona",
+    "version": "1",
+    "chainId": 1,
+    "verifyingContract": "0x0000000000000000000000000000000000000000"
+  },
+  "types": {
+    "Persona": [
+      {
+        "name": "personaId",
+        "type": "bytes32"
+      },
+      {
+        "name": "metadataCID",
+        "type": "string"
+      },
+      {
+        "name": "timestamp",
+        "type": "uint256"
+      },
+      {
+        "name": "nonce",
+        "type": "uint256"
+      }
+    ]
+  },
+  "message": {
+    "personaId": "0x35b952d3300caacb3d91acb58700c361cdc1e41d051a5f94cfa27815797b5efa",
+    "metadataCID": "local://35b952d3300caacb",
+    "timestamp": 1779879501,
+    "nonce": 1
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "name": "mantle-persona-cli",
+  "version": "0.1.0",
+  "description": "CLI to build, sign, and pin persona metadata",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "node tests/run_tests.js"
+  },
+  "dependencies": {
+    "ethers": "^6.16.0",
+    "web3.storage": "^4.5.5"
+  }
+}

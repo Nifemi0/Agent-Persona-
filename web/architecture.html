@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agent Identity Registry — Architecture</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #020617;
+    display: flex; justify-content: center; align-items: center;
+    min-height: 100vh; font-family: 'JetBrains Mono', monospace;
+    padding: 40px 20px;
+  }
+  .container {
+    max-width: 1100px; width: 100%;
+    background: #020617;
+    border: 1px solid #1e293b; border-radius: 12px;
+    padding: 32px; position: relative; overflow: hidden;
+  }
+  /* Grid background */
+  .container::before {
+    content: ''; position: absolute; top: 0; left: 0;
+    width: 100%; height: 100%;
+    background-image:
+      linear-gradient(rgba(51,65,85,0.12) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(51,65,85,0.12) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none; z-index: 0;
+  }
+  .header { position: relative; z-index: 1; margin-bottom: 28px; }
+  .header h1 {
+    color: #f1f5f9; font-size: 22px; font-weight: 700;
+    letter-spacing: -0.3px;
+  }
+  .header h1 span { color: #22d3ee; }
+  .header .subtitle {
+    color: #64748b; font-size: 13px; margin-top: 4px;
+    font-weight: 400;
+  }
+  .header .subtitle span { color: #fbbf24; }
+  svg { position: relative; z-index: 1; display: block; width: 100%; }
+  .info-cards {
+    position: relative; z-index: 1;
+    display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px;
+    margin-top: 28px;
+  }
+  .card {
+    background: rgba(15,23,42,0.7); border: 1px solid #1e293b;
+    border-radius: 8px; padding: 14px 16px;
+  }
+  .card .label {
+    color: #64748b; font-size: 11px; font-weight: 500;
+    text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px;
+  }
+  .card .value {
+    color: #e2e8f0; font-size: 12px; line-height: 1.6;
+    word-break: break-all;
+  }
+  .card .value.highlight { color: #34d399; }
+  .card .value.amber { color: #fbbf24; }
+  .card .value.cyan { color: #22d3ee; }
+  @media (max-width: 700px) {
+    .info-cards { grid-template-columns: 1fr; }
+    .container { padding: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<div class="header">
+  <h1>Agent Identity Registry <span>—</span> Architecture</h1>
+  <div class="subtitle">ERC-8004 aligned agent identity on <span>Mantle Sepolia</span></div>
+</div>
+
+<svg viewBox="0 0 1040 560" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <marker id="arrow-frontend" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#22d3ee"/>
+    </marker>
+    <marker id="arrow-backend" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#34d399"/>
+    </marker>
+    <marker id="arrow-cloud" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#fbbf24"/>
+    </marker>
+    <marker id="arrow-cyan-back" markerWidth="10" markerHeight="7" refX="0" refY="3.5" orient="auto-start-reverse">
+      <polygon points="10 0, 0 3.5, 10 7" fill="#22d3ee"/>
+    </marker>
+    <!-- Glow filter for cloud/boundary -->
+    <filter id="glow-amber" x="-10%" y="-10%" width="120%" height="120%">
+      <feGaussianBlur stdDeviation="6" result="blur"/>
+      <feFlood flood-color="#fbbf24" flood-opacity="0.15"/>
+      <feComposite in2="blur" operator="in"/>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <!-- Box drop shadows -->
+    <filter id="shadow-frontend" x="-5%" y="-5%" width="115%" height="115%">
+      <feDropShadow dx="0" dy="0" stdDeviation="6" flood-color="#22d3ee" flood-opacity="0.15"/>
+    </filter>
+    <filter id="shadow-backend" x="-5%" y="-5%" width="115%" height="115%">
+      <feDropShadow dx="0" dy="0" stdDeviation="6" flood-color="#34d399" flood-opacity="0.15"/>
+    </filter>
+    <filter id="shadow-amber" x="-5%" y="-5%" width="115%" height="115%">
+      <feDropShadow dx="0" dy="0" stdDeviation="8" flood-color="#fbbf24" flood-opacity="0.12"/>
+    </filter>
+  </defs>
+
+  <!-- ===== LEGEND ===== -->
+  <g transform="translate(20, 14)">
+    <rect x="0" y="0" width="200" height="40" rx="6" fill="rgba(15,23,42,0.6)" stroke="#1e293b" stroke-width="1"/>
+    <rect x="10" y="12" width="14" height="14" rx="3" fill="rgba(8,51,68,0.5)" stroke="#22d3ee" stroke-width="1"/>
+    <text x="30" y="23" fill="#94a3b8" font-size="10" font-family="JetBrains Mono, monospace">Frontend</text>
+    <rect x="92" y="12" width="14" height="14" rx="3" fill="rgba(6,78,59,0.5)" stroke="#34d399" stroke-width="1"/>
+    <text x="112" y="23" fill="#94a3b8" font-size="10" font-family="JetBrains Mono, monospace">Backend</text>
+    <rect x="170" y="12" width="14" height="14" rx="3" fill="rgba(120,53,15,0.4)" stroke="#fbbf24" stroke-width="1"/>
+    <text x="190" y="23" fill="#94a3b8" font-size="10" font-family="JetBrains Mono, monospace">Cloud</text>
+  </g>
+
+  <!-- ===== MANTLE SEPOLIA BOUNDARY (Background) ===== -->
+  <rect x="460" y="60" width="560" height="470" rx="14" fill="rgba(120,53,15,0.15)" stroke="#fbbf24" stroke-width="1.5" stroke-dasharray="6,4" filter="url(#glow-amber)"/>
+  <text x="740" y="88" text-anchor="middle" fill="#fbbf24" font-size="13" font-weight="600" font-family="JetBrains Mono, monospace">Mantle Sepolia</text>
+  <text x="740" y="103" text-anchor="middle" fill="#92400e" font-size="9" font-family="JetBrains Mono, monospace">Chain ID 5003</text>
+
+  <!-- ===== 1. USER WALLET ===== -->
+  <g filter="url(#shadow-frontend)">
+    <rect x="40" y="80" width="180" height="68" rx="10" fill="rgba(8,51,68,0.4)" stroke="#22d3ee" stroke-width="1.5"/>
+    <text x="130" y="107" text-anchor="middle" fill="#22d3ee" font-size="13" font-weight="600" font-family="JetBrains Mono, monospace">User Wallet</text>
+    <text x="130" y="125" text-anchor="middle" fill="#67e8f9" font-size="9" font-family="JetBrains Mono, monospace">MetaMask</text>
+  </g>
+
+  <!-- ===== 2. VITE FRONTEND ===== -->
+  <g filter="url(#shadow-frontend)">
+    <rect x="40" y="190" width="180" height="80" rx="10" fill="rgba(8,51,68,0.4)" stroke="#22d3ee" stroke-width="1.5"/>
+    <text x="130" y="218" text-anchor="middle" fill="#22d3ee" font-size="13" font-weight="600" font-family="JetBrains Mono, monospace">Vite Frontend</text>
+    <text x="130" y="238" text-anchor="middle" fill="#67e8f9" font-size="9" font-family="JetBrains Mono, monospace">React + ethers.js</text>
+  </g>
+
+  <!-- ===== 3. VITE MIDDLEWARE ===== -->
+  <g filter="url(#shadow-backend)">
+    <rect x="40" y="320" width="180" height="80" rx="10" fill="rgba(6,78,59,0.4)" stroke="#34d399" stroke-width="1.5"/>
+    <text x="130" y="348" text-anchor="middle" fill="#34d399" font-size="13" font-weight="600" font-family="JetBrains Mono, monospace">Vite Middleware</text>
+    <text x="130" y="368" text-anchor="middle" fill="#6ee7b7" font-size="9" font-family="JetBrains Mono, monospace">/api/upload</text>
+    <text x="130" y="382" text-anchor="middle" fill="#6ee7b7" font-size="9" font-family="JetBrains Mono, monospace">IPFS proxy</text>
+  </g>
+
+  <!-- ===== 4. LOCAL IPFS DAEMON ===== -->
+  <g filter="url(#shadow-backend)">
+    <rect x="40" y="440" width="180" height="68" rx="10" fill="rgba(6,78,59,0.4)" stroke="#34d399" stroke-width="1.5"/>
+    <text x="130" y="467" text-anchor="middle" fill="#34d399" font-size="13" font-weight="600" font-family="JetBrains Mono, monospace">Local IPFS Daemon</text>
+    <text x="130" y="485" text-anchor="middle" fill="#6ee7b7" font-size="9" font-family="JetBrains Mono, monospace">ipfs daemon</text>
+  </g>
+
+  <!-- ===== 5. IDENTITY REGISTRY CONTRACT (inside Mantle Sepolia) ===== -->
+  <g filter="url(#shadow-backend)">
+    <rect x="530" y="310" width="420" height="100" rx="10" fill="rgba(6,78,59,0.4)" stroke="#34d399" stroke-width="1.5"/>
+    <text x="740" y="342" text-anchor="middle" fill="#34d399" font-size="15" font-weight="600" font-family="JetBrains Mono, monospace">IdentityRegistry</text>
+    <text x="740" y="362" text-anchor="middle" fill="#6ee7b7" font-size="11" font-family="JetBrains Mono, monospace">ERC-721 URIStorage</text>
+    <text x="740" y="380" text-anchor="middle" fill="#6ee7b7" font-size="11" font-family="JetBrains Mono, monospace">ERC-8004 Aligned</text>
+    <text x="740" y="398" text-anchor="middle" fill="#6ee7b7" font-size="9" font-family="JetBrains Mono, monospace">0xCd2A...509D</text>
+  </g>
+
+  <!-- ===== ARROWS ===== -->
+
+  <!-- Wallet → Frontend: "sign | register" -->
+  <path d="M 130 148 L 130 183" stroke="#22d3ee" stroke-width="1.8" marker-end="url(#arrow-frontend)" opacity="0.7"/>
+  <rect x="108" y="156" width="64" height="18" rx="4" fill="#020617" stroke="none"/>
+  <text x="140" y="168" text-anchor="middle" fill="#22d3ee" font-size="9" font-family="JetBrains Mono, monospace" opacity="0.85">sign | register</text>
+
+  <!-- Frontend → Middleware: "POST /api/upload" -->
+  <path d="M 130 270 L 130 313" stroke="#22d3ee" stroke-width="1.8" marker-end="url(#arrow-frontend)" opacity="0.7"/>
+  <rect x="100" y="282" width="70" height="18" rx="4" fill="#020617" stroke="none"/>
+  <text x="135" y="294" text-anchor="middle" fill="#22d3ee" font-size="9" font-family="JetBrains Mono, monospace" opacity="0.85">POST /api/upload</text>
+
+  <!-- Middleware → IPFS: "ipfs add" -->
+  <path d="M 130 400 L 130 433" stroke="#34d399" stroke-width="1.8" marker-end="url(#arrow-backend)" opacity="0.7"/>
+  <rect x="104" y="408" width="62" height="18" rx="4" fill="#020617" stroke="none"/>
+  <text x="135" y="420" text-anchor="middle" fill="#34d399" font-size="9" font-family="JetBrains Mono, monospace" opacity="0.85">ipfs add</text>
+
+  <!-- Frontend → Contract: "register(agentURI)" -->
+  <path d="M 220 230 L 523 230 L 523 388 L 530 388" stroke="#22d3ee" stroke-width="1.8" marker-end="url(#arrow-frontend)" opacity="0.7" fill="none"/>
+  <rect x="310" y="216" width="138" height="18" rx="4" fill="#020617" stroke="none"/>
+  <text x="379" y="228" text-anchor="middle" fill="#22d3ee" font-size="9" font-family="JetBrains Mono, monospace" opacity="0.85">register(agentURI)</text>
+
+  <!-- Contract → IPFS: "tokenURI → cid" -->
+  <path d="M 530 470 L 300 470 L 300 490 L 226 490 L 226 502" stroke="#fbbf24" stroke-width="1.8" marker-end="url(#arrow-cloud)" opacity="0.7" fill="none"/>
+  <rect x="310" y="456" width="120" height="18" rx="4" fill="#020617" stroke="none"/>
+  <text x="370" y="468" text-anchor="middle" fill="#fbbf24" font-size="9" font-family="JetBrains Mono, monospace" opacity="0.85">tokenURI → cid</text>
+
+</svg>
+
+<div class="info-cards">
+  <div class="card">
+    <div class="label">Contract</div>
+    <div class="value highlight">0xCd2A74Cff974B2B962A5AA46D3aBe3F7b137509D</div>
+  </div>
+  <div class="card">
+    <div class="label">Standard</div>
+    <div class="value"><span class="cyan">ERC-8004</span> Aligned <span class="amber">•</span> <span class="highlight">ERC-721 URIStorage</span></div>
+  </div>
+  <div class="card">
+    <div class="label">Network</div>
+    <div class="value"><span class="amber">Mantle Sepolia</span> <span class="cyan">•</span> Chain ID 5003</div>
+  </div>
+</div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,8 @@
+{
+  "name": "Demo Agent",
+  "description": "Persona for Mantle Persona Registry demo",
+  "contact": "demo@example.com",
+  "homepage": "https://example.com/demo-agent",
+  "nonce": 1,
+  "tags": ["demo","agent","mantle"]
+}

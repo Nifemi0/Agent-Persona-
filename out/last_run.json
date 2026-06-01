@@ -1,0 +1,11 @@
+{
+  "registryAddress": "0xCd2A74Cff974B2B962A5AA46D3aBe3F7b137509D",
+  "chainId": 5003,
+  "deployTx": "0xdcf42113a9139a99412867cefc44a6334fe4d1cc8bbcf464cf813eb0eec534ba",
+  "agentRegistry": "eip155:5003:0xCd2A74Cff974B2B962A5AA46D3aBe3F7b137509D",
+  "name": "Agent Identity Registry",
+  "symbol": "AID",
+  "standard": "ERC-8004 (Draft)",
+  "testAgentId": 1,
+  "testAgentURI": "ipfs://test-cid"
+}

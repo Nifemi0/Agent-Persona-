@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agent Identity Registry — Demo</title>
+<script src="p5.min.js"></script>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+html, body { background:#000; overflow:hidden; width:100%; height:100%; }
+canvas { display:block; }
+
+/* HUD overlay */
+#hud {
+  position:fixed; bottom:20px; left:50%; transform:translateX(-50%);
+  display:flex; align-items:center; gap:10px;
+  font-family:'Courier New',monospace; font-size:11px;
+  color:rgba(255,255,255,0.15); letter-spacing:1px;
+  z-index:10; pointer-events:none;
+}
+#hud .dot { width:6px; height:6px; border-radius:50%; background:rgba(245,158,11,0.3); }
+#hud .dot.active { background:#F59E0B; box-shadow:0 0 8px rgba(245,158,11,0.5); }
+#hud .dot.done { background:rgba(52,211,153,0.5); }
+
+#controls {
+  position:fixed; bottom:60px; left:50%; transform:translateX(-50%);
+  display:flex; gap:12px; z-index:10;
+}
+#controls button {
+  padding:8px 20px; border:1px solid rgba(245,158,11,0.3);
+  background:rgba(0,0,0,0.7); color:#f0f0fa;
+  font-family:'Courier New',monospace; font-size:11px;
+  letter-spacing:1px; cursor:pointer; transition:all 0.3s;
+  border-radius:4px;
+}
+#controls button:hover { border-color:#F59E0B; background:rgba(245,158,11,0.1); }
+#controls button:disabled { opacity:0.2; cursor:default; }
+#timeline {
+  position:fixed; bottom:0; left:0; right:0; height:2px; z-index:10;
+  background:rgba(255,255,255,0.05);
+}
+#timeline .bar {
+  height:100%; width:0%;
+  background:linear-gradient(90deg, #F59E0B, #22d3ee);
+  transition:width 0.1s linear;
+}
+</style>
+</head>
+<body>
+
+<div id="timeline"><div class="bar" id="progressBar"></div></div>
+
+<div id="hud">
+  <span style="color:rgba(255,255,255,0.3);font-size:9px">SCENE</span>
+  <span id="sceneLabel">1 / 8</span>
+  <span style="color:rgba(255,255,255,0.1)">|</span>
+  <span id="timeLabel">0:00</span>
+</div>
+
+<div id="controls">
+  <button id="playBtn">▶ PLAY</button>
+  <button id="restartBtn">⟳ RESTART</button>
+</div>
+
+<script>
+// ============================================================
+// CONFIG
+// ============================================================
+const TOTAL_DURATION = 115; // seconds
+const SCENES = [
+  { id:'title',       start:0,   end:12,   label:'Title' },
+  { id:'problem',     start:12,  end:28,   label:'The Problem' },
+  { id:'identity',    start:28,  end:44,   label:'What is Identity' },
+  { id:'solution',    start:44,  end:60,   label:'One-Click Registration' },
+  { id:'architecture',start:60,  end:76,   label:'Architecture' },
+  { id:'trust',       start:76,  end:92,   label:'Trust Model' },
+  { id:'erccomply',   start:92,  end:104,  label:'ERC-8004' },
+  { id:'closing',     start:104, end:115,  label:'Closing' },
+];
+
+// ============================================================
+// P5 SKETCH
+// ============================================================
+const sketch = (p) => {
+  let particles = [];
+  let elapsed = 0;
+  let playing = true;
+  let startTime = 0;
+  let pausedElapsed = 0;
+
+  // Color palette
+  const C = {
+    bg:      '#000000',
+    gold:    '#F59E0B',
+    cyan:    '#22d3ee',
+    emerald: '#34d399',
+    white:   '#f0f0fa',
+    dim:     '#94a3b8',
+    accent:  '#8B5CF6',
+  };
+
+  p.setup = () => {
+    const maxW = p.windowWidth;
+    const maxH = p.windowHeight;
+    const scale = Math.min(maxW / 1920, maxH / 1080);
+    const cW = Math.floor(1920 * scale);
+    const cH = Math.floor(1080 * scale);
+    p.createCanvas(cW, cH);
+    p.pixelDensity(1);
+    p.colorMode(p.RGB, 255);
+    p.textFont('Courier New, monospace');
+    p.frameRate(30);
+
+    // Start the clock immediately
+    startTime = Date.now();
+
+    // Init particles
+    for (let i = 0; i < 80; i++) {
+      particles.push({
+        x: p.random(p.width), y: p.random(p.height),
+        vx: p.random(-0.3, 0.3), vy: p.random(-0.3, 0.3),
+        size: p.random(1, 3),
+        alpha: p.random(0.05, 0.15),
+        hueShift: p.random(0.5, 2),
+      });
+    }
+  };
+
+  p.draw = () => {
+    // Update elapsed — use Date.now() for reliability
+    if (playing) {
+      const now = Date.now();
+      elapsed = pausedElapsed + (now - startTime) / 1000;
+      if (elapsed >= TOTAL_DURATION) {
+        elapsed = TOTAL_DURATION;
+        playing = false;
+      }
+    }
+
+    // Scene time for current scene
+    let currentScene = 0;
+    for (let i = SCENES.length - 1; i >= 0; i--) {
+      if (elapsed >= SCENES[i].start) { currentScene = i; break; }
+    }
+    const scene = SCENES[currentScene];
+    const t = Math.min(1, Math.max(0, (elapsed - scene.start) / (scene.end - scene.start)));
+
+    // Update UI
+    document.getElementById('timeLabel').textContent =
+      `${Math.floor(elapsed / 60)}:${String(Math.floor(elapsed % 60)).padStart(2, '0')}`;
+    document.getElementById('progressBar').style.width = `${(elapsed / TOTAL_DURATION) * 100}%`;
+    document.getElementById('sceneLabel').textContent = `${currentScene + 1} / ${SCENES.length}`;
+
+    // Update HUD dots
+    document.querySelectorAll('#hud .dot').forEach((dot, i) => {
+      dot.classList.toggle('active', i === currentScene);
+      dot.classList.toggle('done', elapsed > SCENES[i].end);
+    });
+
+    // Draw
+    p.background(0);
+    drawParticles(particles, currentScene);
+
+    // Draw scene
+    switch (scene.id) {
+      case 'title':       drawTitle(t); break;
+      case 'problem':     drawProblem(t); break;
+      case 'identity':    drawIdentify(t); break;
+      case 'solution':    drawSolution(t); break;
+      case 'architecture':drawArchitecture(t); break;
+      case 'trust':       drawTrust(t); break;
+      case 'erccomply':   drawERC(t); break;
+      case 'closing':     drawClosing(t); break;
+    }
+
+    // Scanline overlay
+    drawScanlines();
+  };
+
+  // ============================================================
+  // SCENE: TITLE
+  // ============================================================
+  function drawTitle(t) {
+    const fadeIn = p.constrain(t * 3, 0, 1);
+    const fadeOut = 1 - p.constrain((t - 0.7) * 4, 0, 1);
+
+    p.push();
+    p.translate(p.width / 2, p.height / 2 - 40);
+    p.scale(0.8 + 0.2 * fadeIn);
+
+    // Title
+    p.textAlign(p.CENTER, p.CENTER);
+    p.fill(240, 240, 250, 255 * fadeIn * fadeOut);
+    p.textSize(72);
+    p.textStyle(p.BOLD);
+    p.text('Agent Identity Registry', 0, -30);
+
+    // Subtitle
+    p.textSize(22);
+    p.textStyle(p.NORMAL);
+    p.fill(148, 163, 184, 200 * fadeIn * fadeOut);
+    p.text('ERC-8004 aligned agent identity on Mantle', 0, 40);
+
+    // Gold underline
+    p.noFill();
+    p.stroke(245, 158, 11, 150 * fadeIn * fadeOut);
+    p.strokeWeight(2);
+    const lineW = 300 * fadeIn;
+    p.line(-lineW / 2, 60, lineW / 2, 60);
+
+    // Mantle badge
+    p.noStroke();
+    p.fill(255, 215, 0, 100 * fadeIn * fadeOut);
+    p.circle(0, 130, 40);
+    p.fill(245, 158, 11, 200 * fadeIn * fadeOut);
+    p.textSize(18);
+    p.textStyle(p.BOLD);
+    p.text('M', 0, 136);
+
+    // Tagline
+    p.textSize(13);
+    p.textStyle(p.NORMAL);
+    p.fill(148, 163, 184, 100 * fadeIn * fadeOut);
+    p.text('Mantle Turing Test Hackathon 2026', 0, 175);
+
+    p.pop();
+
+    // Verb
+    p.textAlign(p.CENTER, p.CENTER);
+    p.textSize(13);
+    p.fill(148, 163, 184, 60 * fadeIn * fadeOut);
+    p.text('Register — Verify — Trust', p.width / 2, p.height - 80);
+  }
+
+  // ============================================================
+  // SCENE: PROBLEM
+  // ============================================================
+  function drawProblem(t) {
+    const lines = [
+      { text: 'AI agents emerge everywhere.', delay: 0.0 },
+      { text: 'But without identity,', delay: 0.15 },
+      { text: 'they are ephemeral —', delay: 0.30 },
+      { text: 'indistinguishable,', delay: 0.40 },
+      { text: 'non-reputable, untrustable.', delay: 0.50 },
+    ];
+
+    // Anonymity icons
+    const showIcons = t > 0.1;
+    if (showIcons) {
+      const iconT = p.constrain((t - 0.1) / 0.6, 0, 1);
+      for (let i = 0; i < 8; i++) {
+        const x = 300 + i * 175;
+        const y = 500 + p.sin(elapsed * 0.5 + i * 1.7) * 20;
+        const alpha = 80 * iconT * (0.5 + 0.5 * p.sin(elapsed * 0.3 + i * 0.9));
+        p.fill(148, 163, 184, alpha);
+        p.noStroke();
+        p.circle(x, y, 24);
+        p.fill(148, 163, 184, alpha * 0.3);
+        p.circle(x - 6, y - 6, 6);
+        p.textAlign(p.CENTER, p.CENTER);
+        p.textSize(8);
+        p.fill(148, 163, 184, alpha * 0.5);
+        p.text('?', x, y + 1);
+      }
+    }
+
+    // Text lines
+    p.textAlign(p.CENTER, p.CENTER);
+    for (let i = 0; i < lines.length; i++) {
+      const lineT = p.constrain((t - lines[i].delay) / 0.25, 0, 1);
+      const alpha = 255 * easeOutCubic(lineT);
+      const yOff = (1 - easeOutCubic(lineT)) * 20;
+      p.fill(240, 240, 250, alpha);
+      p.textSize(i === lines.length - 1 ? 24 : 20);
+      p.textStyle(i === lines.length - 1 ? p.BOLD : p.NORMAL);
+      p.text(lines[i].text, p.width / 2, 180 + i * 50 - yOff);
+    }
+
+    // Stat
+    if (t > 0.6) {
+      const statT = p.constrain((t - 0.6) / 0.3, 0, 1);
+      p.textAlign(p.CENTER, p.CENTER);
+      p.fill(245, 158, 11, 200 * statT);
+      p.textSize(36);
+      p.textStyle(p.BOLD);
+      p.text('15M+', p.width / 2 - 160, 540);
+      p.fill(148, 163, 184, 150 * statT);
+      p.textSize(16);
+      p.textStyle(p.NORMAL);
+      p.text('AI agents projected by 2027', p.width / 2 - 160, 575);
+
+      p.fill(245, 158, 11, 200 * statT);
+      p.textSize(36);
+      p.textStyle(p.BOLD);
+      p.text('$38B', p.width / 2 + 160, 540);
+      p.fill(148, 163, 184, 150 * statT);
+      p.textSize(16);
+      p.textStyle(p.NORMAL);
+      p.text('lost to AI-related fraud annually', p.width / 2 + 160, 575);
+
+      // Sources
+      p.fill(148, 163, 184, 50 * statT);
+      p.textSize(11);
+      p.text('— Gartner  |  — Deloitte 2025', p.width / 2, 630);
+    }
+  }
+
+  // ============================================================
+  // SCENE: IDENTITY
+  // ============================================================
+  function drawIdentify(t) {
+    // Agent emerges
+    const emergeT = p.constrain(t / 0.4, 0, 1);
+    const ax = p.width / 2;
+    const ay = 400;
+    const agentR = 40;
+
+    // Glow
+    if (emergeT > 0.3) {
+      p.drawingContext.shadowColor = 'rgba(245,158,11,0.3)';
+      p.drawingContext.shadowBlur = 40;
+    }
+
+    // Agent circle
+    p.fill(240, 240, 250, 255 * emergeT);
+    p.noStroke();
+    p.circle(ax, ay, agentR * 2);
+
+    p.drawingContext.shadowBlur = 0;
+
+    // Agent label
+    if (emergeT > 0.6) {
+      const labelT = p.constrain((t - 0.3) / 0.3, 0, 1);
+      p.fill(rgba(C.gold, 200 * labelT));
+      p.textAlign(p.CENTER, p.CENTER);
+      p.textSize(13);
+      p.text('agent-alice', ax, ay - 80);
+
+      // Properties fan out
+      const props = [
+        { label:'owner',  val:'0xCbe7...008c',  angle:-Math.PI/2.5, dist:140 },
+        { label:'wallet', val:'0xCbe7...008c',  angle:-Math.PI/3.5, dist:200 },
+        { label:'agentId',val:'#1',             angle:-Math.PI/5,   dist:170 },
+        { label:'URI',    val:'ipfs://Qm...',    angle:-Math.PI/9,   dist:180 },
+      ];
+
+      props.forEach((prop, i) => {
+        const propT = p.constrain((t - 0.35 - i * 0.08) / 0.2, 0, 1);
+        const px = ax + p.cos(prop.angle) * prop.dist * propT;
+        const py = ay + p.sin(prop.angle) * prop.dist * propT;
+
+        p.fill(rgba(C.dim, 150 * propT));
+        p.textSize(11);
+        p.textStyle(p.NORMAL);
+        p.textAlign(p.RIGHT, p.CENTER);
+        p.text(prop.label + ':', px - 5, py);
+
+        p.fill(rgba(C.white, 180 * propT));
+        p.textSize(11);
+        p.text(prop.val, px + 5, py);
+      });
+    }
+
+    // Bottom text
+    if (t > 0.5) {
+      const botT = p.constrain((t - 0.5) / 0.3, 0, 1);
+      p.textAlign(p.CENTER, p.CENTER);
+      p.fill(rgba(C.white, 200 * botT));
+      p.textSize(20);
+      p.text('Every agent needs a verifiable', p.width / 2, 620);
+      p.fill(rgba(C.gold, 220 * botT));
+      p.textSize(24);
+      p.textStyle(p.BOLD);
+      p.text('on-chain identity.', p.width / 2, 660);
+    }
+  }
+
+  // ============================================================
+  // SCENE: SOLUTION (One-Click Registration)
+  // ============================================================
+  function drawSolution(t) {
+    const steps = [
+      { label:'1. Sign',  sub:'Prove wallet ownership', x:300,   icon:'✍' },
+      { label:'2. Upload',sub:'Metadata to IPFS',        x:700,   icon:'☁' },
+      { label:'3. Mint',  sub:'ERC-8004 token on Mantle',x:1100,  icon:'◆' },
+      { label:'4. Verify',sub:'Independent verification', x:1500,  icon:'✓' },
+    ];
+
+    // Arrows between steps
+    for (let i = 0; i < steps.length - 1; i++) {
+      const arrowT = p.constrain((t - 0.15 - i * 0.15) / 0.2, 0, 1);
+      const x1 = steps[i].x + 80;
+      const x2 = steps[i + 1].x - 80;
+      const y = 320;
+      const progress = x1 + (x2 - x1) * arrowT;
+
+      p.stroke(rgba(C.gold, 100 * arrowT));
+      p.strokeWeight(1.5);
+      p.line(x1, y, progress, y);
+
+      // Arrowhead
+      if (arrowT > 0.8) {
+        p.fill(rgba(C.gold, 100));
+        p.noStroke();
+        p.triangle(progress, y, progress - 10, y - 5, progress - 10, y + 5);
+      }
+    }
+
+    // Steps
+    steps.forEach((step, i) => {
+      const stepT = p.constrain((t - i * 0.15) / 0.25, 0, 1);
+
+      if (stepT > 0) {
+        // Circle
+        p.fill(rgba(C.gold, 30 * stepT));
+        p.stroke(rgba(C.gold, 80 * stepT));
+        p.strokeWeight(1);
+        p.circle(step.x, 320, 60);
+
+        // Icon
+        p.fill(rgba(C.gold, 200 * stepT));
+        p.noStroke();
+        p.textAlign(p.CENTER, p.CENTER);
+        p.textSize(20);
+        p.text(step.icon, step.x, 324);
+
+        // Label
+        p.fill(rgba(C.white, 220 * stepT));
+        p.textSize(16);
+        p.textStyle(p.BOLD);
+        p.text(step.label, step.x, 400);
+
+        // Sub
+        p.fill(rgba(C.dim, 150 * stepT));
+        p.textSize(12);
+        p.textStyle(p.NORMAL);
+        p.text(step.sub, step.x, 425);
+      }
+    });
+
+    // Bottom CTA
+    if (t > 0.5) {
+      const ctaT = p.constrain((t - 0.5) / 0.3, 0, 1);
+      p.textAlign(p.CENTER, p.CENTER);
+      p.fill(rgba(C.white, 150 * ctaT));
+      p.textSize(16);
+      p.text('One signature. One transaction.', p.width / 2, 550);
+      p.fill(rgba(C.emerald, 200 * ctaT));
+      p.textSize(12);
+      p.text('~128K gas • 3-5 seconds', p.width / 2, 580);
+    }
+  }
+
+  // ============================================================
+  // SCENE: ARCHITECTURE
+  // ============================================================
+  function drawArchitecture(t) {
+    const comps = [
+      { label:'Wallet',    sub:'MetaMask',   x:250, y:300, w:160, h:60,  col:C.cyan },
+      { label:'Frontend',  sub:'React + Vite',x:500, y:300, w:160, h:60,  col:C.cyan },
+      { label:'IPFS',      sub:'Metadata',   x:750, y:300, w:160, h:60,  col:C.emerald },
+      { label:'Registry',  sub:'ERC-721 URI', x:1000,y:300, w:180, h:60,  col:C.gold },
+      { label:'Mantle',    sub:'Sepolia',    x:1200,y:300, w:160, h:60,  col:['#fbbf24', C.dim] },
+    ];
+
+    // Mantle boundary box
+    const boundT = p.constrain((t - 0.5) / 0.4, 0, 1);
+    if (boundT > 0) {
+      p.noFill();
+      p.stroke(rgba(C.gold, 60 * boundT));
+      p.strokeWeight(1);
+      p.drawingContext.setLineDash([6, 4]);
+      p.rect(950, 200, 460, 260, 8);
+      p.drawingContext.setLineDash([]);
+      p.fill(rgba(C.gold, 60 * boundT));
+      p.textSize(11);
+      p.textAlign(p.CENTER, p.CENTER);
+      p.text('Mantle Sepolia — Chain 5003', 1180, 190);
+    }
+
+    // Draw components
+    comps.forEach((comp, i) => {
+      const compT = p.constrain((t - i * 0.1) / 0.3, 0, 1);
+      if (compT > 0) {
+        const col = Array.isArray(comp.col) ? comp.col[0] : comp.col;
+        p.fill(rgba(col, 40 * compT));
+        p.stroke(rgba(col, 120 * compT));
+        p.strokeWeight(1.5);
+        p.rect(comp.x, comp.y, comp.w, comp.h, 6);
+
+        p.fill(rgba(C.white, 220 * compT));
+        p.noStroke();
+        p.textAlign(p.CENTER, p.CENTER);
+        p.textSize(14);
+        p.textStyle(p.BOLD);
+        p.text(comp.label, comp.x + comp.w / 2, comp.y + comp.h / 2 - 8);
+        p.textSize(10);
+        p.textStyle(p.NORMAL);
+        p.fill(rgba(C.dim, 150 * compT));
+        p.text(comp.sub, comp.x + comp.w / 2, comp.y + comp.h / 2 + 14);
+      }
+    });
+
+    // Connection arrows
+    for (let i = 0; i < comps.length - 1; i++) {
+      const connT = p.constrain((t - 0.2 - i * 0.1) / 0.2, 0, 1);
+      if (connT > 0) {
+        const x1 = comps[i].x + comps[i].w;
+        const x2 = comps[i + 1].x;
+        const y = comps[i].y + comps[i].h / 2;
+
+        p.stroke(rgba(C.dim, 50 * connT));
+        p.strokeWeight(1);
+        p.line(x1, y, x2, y);
+
+        p.fill(rgba(C.dim, 50 * connT));
+        p.noStroke();
+        p.triangle(x2, y, x2 - 8, y - 4, x2 - 8, y + 4);
+      }
+    }
+
+    // Title
+    if (t > 0.1) {
+      const titleT = p.constrain((t - 0.1) / 0.2, 0, 1);
+      p.fill(rgba(C.white, 200 * titleT));
+      p.textAlign(p.CENTER, p.CENTER);
+      p.textSize(22);
+      p.textStyle(p.BOLD);
+      p.text('Architecture', p.width / 2, 120);
+      p.fill(rgba(C.dim, 100 * titleT));
+      p.textSize(13);
+      p.textStyle(p.NORMAL);
+      p.text('One-click registration flow', p.width / 2, 155);
+    }
+  }
+
+  // ============================================================
+  // SCENE: TRUST MODEL
+  // ============================================================
+  function drawTrust(t) {
+    // Two agents
+    const a1x = p.width / 2 - 300;
+    const a2x = p.width / 2 + 300;
+    const ay = 300;
+
+    // Agent 1
+    const a1T = p.constrain(t / 0.3, 0, 1);
+    p.fill(rgba(C.cyan, 40 * a1T));
+    p.stroke(rgba(C.cyan, 100 * a1T));
+    p.strokeWeight(1.5);
+    p.circle(a1x, ay, 50);
+    p.fill(rgba(C.cyan, 200 * a1T));
+    p.noStroke();
+    p.textAlign(p.CENTER, p.CENTER);
+    p.textSize(11);
+    p.textStyle(p.BOLD);
+    p.text('Agent A', a1x, ay);
+
+    // Agent 2
+    const a2T = p.constrain((t - 0.1) / 0.3, 0, 1);
+    p.fill(rgba(C.emerald, 40 * a2T));
+    p.stroke(rgba(C.emerald, 100 * a2T));
+    p.strokeWeight(1.5);
+    p.circle(a2x, ay, 50);
+    p.fill(rgba(C.emerald, 200 * a2T));
+    p.noStroke();
+    p.textAlign(p.CENTER, p.CENTER);
+    p.textSize(11);
+    p.textStyle(p.BOLD);
+    p.text('Agent B', a2x, ay);
+
+    // Verification steps
+    const steps = [
+      { text:'Look up agentId on chain',            delay:0.2 },
+      { text:'Get owner + tokenURI from registry',  delay:0.3 },
+      { text:'Fetch IPFS metadata',                 delay:0.4 },
+      { text:'Recover signer from signature',       delay:0.5 },
+      { text:'Compare signer → owner — verified!',  delay:0.6 },
+    ];
+
+    steps.forEach((step, i) => {
+      const stepT = p.constrain((t - step.delay) / 0.15, 0, 1);
+      if (stepT > 0) {
+        const isLast = i === steps.length - 1;
+        p.fill(rgba(isLast ? C.emerald : C.white, 200 * stepT));
+        p.textAlign(p.LEFT, p.CENTER);
+        p.textSize(isLast ? 16 : 14);
+        p.textStyle(isLast ? p.BOLD : p.NORMAL);
+
+        const prefix = isLast ? '✓ ' : `${i + 1}. `;
+        p.text(prefix + step.text, p.width / 2 - 180, 400 + i * 36);
+      }
+    });
+
+    // Arrow between agents
+    const arrowT = p.constrain((t - 0.15) / 0.2, 0, 1);
+    if (arrowT > 0) {
+      p.stroke(rgba(C.gold, 80 * arrowT));
+      p.strokeWeight(1.5);
+      p.drawingContext.setLineDash([4, 4]);
+      p.line(a1x + 25, ay, a2x - 25, ay);
+      p.drawingContext.setLineDash([]);
+
+      // Label on arrow
+      p.fill(rgba(C.gold, 150 * arrowT));
+      p.textAlign(p.CENTER, p.CENTER);
+      p.textSize(10);
+      p.text('"Who are you?"', p.width / 2, ay - 25);
+    }
+
+    // Result
+    if (t > 0.8) {
+      const resT = p.constrain((t - 0.8) / 0.2, 0, 1);
+      p.fill(rgba(C.emerald, 200 * resT));
+      p.textAlign(p.CENTER, p.CENTER);
+      p.textSize(18);
+      p.textStyle(p.BOLD);
+      p.text('Cryptographic trust — no server, no gatekeeper', p.width / 2, 680);
+      p.fill(rgba(C.dim, 100 * resT));
+      p.textSize(13);
+      p.textStyle(p.NORMAL);
+      p.text('Any agent independently verifies any other agent', p.width / 2, 715);
+    }
+  }
+
+  // ============================================================
+  // SCENE: ERC-8004 ALIGNMENT
+  // ============================================================
+  function drawERC(t) {
+    // Badge
+    const badgeT = p.constrain(t / 0.3, 0, 1);
+    p.push();
+    p.translate(p.width / 2, 140);
+    p.scale(badgeT);
+    p.fill(rgba(C.gold, 30));
+    p.stroke(rgba(C.gold, 80));
+    p.strokeWeight(1.5);
+    p.rect(-120, -25, 240, 50, 25);
+    p.fill(rgba(C.gold, 200));
+    p.noStroke();
+    p.textAlign(p.CENTER, p.CENTER);
+    p.textSize(16);
+    p.textStyle(p.BOLD);
+    p.text('ERC-8004  IDENTITY REGISTRY', 0, 2);
+    p.pop();
+
+    // Title
+    if (t > 0.15) {
+      const titleT = p.constrain((t - 0.15) / 0.2, 0, 1);
+      p.fill(rgba(C.white, 180 * titleT));
+      p.textAlign(p.CENTER, p.CENTER);
+      p.textSize(15);
+      p.textStyle(p.NORMAL);
+      p.text('Aligned with the ERC-8004 Trustless Agents standard', p.width / 2, 230);
+    }
+
+    // Checklist
+    const checks = [
+      { text:'ERC-721 with URIStorage',                 ok:true,  delay:0.2 },
+      { text:'Incremental agentId (tokenId)',           ok:true,  delay:0.26 },
+      { text:'register(string) returns agentId',         ok:true,  delay:0.32 },
+      { text:'setAgentURI() with URIUpdated event',      ok:true,  delay:0.38 },
+      { text:'getMetadata / setMetadata',                ok:true,  delay:0.44 },
+      { text:'agentWallet — reserved key, EIP-712',     ok:true,  delay:0.50 },
+      { text:'ERC-8004 registration file JSON schema',   ok:true,  delay:0.56 },
+      { text:'Soulbound (non-transferable) identity',   ok:true,  delay:0.62 },
+    ];
+
+    checks.forEach((check, i) => {
+      const checkT = p.constrain((t - check.delay) / 0.12, 0, 1);
+      if (checkT > 0) {
+        const x = p.width / 2 - 250;
+        const y = 290 + i * 38;
+
+        // Checkmark
+        p.fill(rgba(C.emerald, 180 * checkT));
+        p.noStroke();
+        p.textAlign(p.RIGHT, p.CENTER);
+        p.textSize(16);
+        p.text('✓', x - 15, y);
+
+        // Text
+        p.fill(rgba(C.white, 180 * checkT));
+        p.textAlign(p.LEFT, p.CENTER);
+        p.textSize(14);
+        p.textStyle(p.NORMAL);
+        p.text(check.text, x, y);
+      }
+    });
+
+    // Future note
+    if (t > 0.7) {
+      const noteT = p.constrain((t - 0.7) / 0.3, 0, 1);
+      p.fill(rgba(C.dim, 100 * noteT));
+      p.textAlign(p.CENTER, p.CENTER);
+      p.textSize(12);
+      p.text('Reputation & Validation registries — future scope', p.width / 2, 650);
+    }
+  }
+
+  // ============================================================
+  // SCENE: CLOSING
+  // ============================================================
+  function drawClosing(t) {
+    const fadeIn = p.constrain(t * 2, 0, 1);
+
+    // Large title
+    p.push();
+    p.translate(p.width / 2, p.height / 2 - 60);
+    p.scale(0.9 + 0.1 * fadeIn);
+
+    p.fill(rgba(C.white, 255 * fadeIn));
+    p.textAlign(p.CENTER, p.CENTER);
+    p.textSize(56);
+    p.textStyle(p.BOLD);
+    p.text('Agent Identity Registry', 0, -20);
+
+    p.fill(rgba(C.gold, 200 * fadeIn));
+    p.textSize(18);
+    p.textStyle(p.NORMAL);
+    p.text('ERC-8004 aligned agent identity on Mantle', 0, 35);
+
+    // Gold line
+    p.noFill();
+    p.stroke(rgba(C.gold, 100 * fadeIn));
+    p.strokeWeight(1.5);
+    const lw = 200 * fadeIn;
+    p.line(-lw / 2, 55, lw / 2, 55);
+
+    p.pop();
+
+    // Details
+    if (t > 0.15) {
+      const detT = p.constrain((t - 0.15) / 0.3, 0, 1);
+      const details = [
+        'Contract: 0xCd2A74Cff974B2B962A5AA46D3aBe3F7b137509D',
+        'Network: Mantle Sepolia • Chain ID: 5003',
+        'Standard: ERC-8004 (Draft)',
+        'Demo: found-toxic-caribbean-trim.trycloudflare.com',
+      ];
+      details.forEach((d, i) => {
+        p.fill(rgba(C.dim, 150 * detT));
+        p.textAlign(p.CENTER, p.CENTER);
+        p.textSize(13);
+        p.text(d, p.width / 2, p.height / 2 + 40 + i * 30);
+      });
+    }
+
+    // Footer
+    if (t > 0.4) {
+      const footT = p.constrain((t - 0.4) / 0.3, 0, 1);
+      p.fill(rgba(C.dim, 80 * footT));
+      p.textAlign(p.CENTER, p.CENTER);
+      p.textSize(12);
+      p.text('Built for the Mantle Turing Test Hackathon 2026', p.width / 2, p.height - 100);
+      p.fill(rgba(C.dim, 50 * footT));
+      p.textSize(11);
+      p.text('Agentic Wallets & Economy Track', p.width / 2, p.height - 75);
+      p.fill(rgba(C.dim, 30 * footT));
+      p.textSize(10);
+      p.text('Built solo in 8 days', p.width / 2, p.height - 50);
+    }
+
+    // Particles speed up at end
+    particles.forEach(part => {
+      part.vx *= 1.01;
+      part.vy *= 1.01;
+    });
+  }
+
+  // ============================================================
+  // HELPERS
+  // ============================================================
+  function drawParticles(arr, sceneIdx) {
+    arr.forEach(part => {
+      part.x += part.vx;
+      part.y += part.vy;
+      if (part.x < -10) part.x = p.width + 10;
+      if (part.x > p.width + 10) part.x = -10;
+      if (part.y < -10) part.y = p.height + 10;
+      if (part.y > p.height + 10) part.y = -10;
+
+      // Speed based on scene
+      const speedMul = sceneIdx === 7 ? 3 : 1;
+
+      part.vx += (Math.random() - 0.5) * 0.05 * speedMul;
+      part.vy += (Math.random() - 0.5) * 0.05 * speedMul;
+      part.vx = Math.min(1, Math.max(-1, part.vx));
+      part.vy = Math.min(1, Math.max(-1, part.vy));
+
+      p.fill(148, 163, 184, part.alpha * 255);
+      p.noStroke();
+      p.circle(part.x, part.y, part.size);
+    });
+
+    // Connection lines between nearby particles
+    p.stroke(148, 163, 184, 10);
+    p.strokeWeight(0.3);
+    for (let i = 0; i < arr.length; i++) {
+      for (let j = i + 1; j < arr.length; j++) {
+        const dx = arr[i].x - arr[j].x;
+        const dy = arr[i].y - arr[j].y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < 150) {
+          p.line(arr[i].x, arr[i].y, arr[j].x, arr[j].y);
+        }
+      }
+    }
+  }
+
+  function drawScanlines() {
+    p.blendMode(p.ADD);
+    for (let y = 0; y < p.height; y += 3) {
+      p.stroke(0, 0, 0, 8);
+      p.strokeWeight(1);
+      p.line(0, y, p.width, y);
+    }
+    p.blendMode(p.BLEND);
+  }
+
+  function rgba(color, a) {
+    // Parse hex or use named
+    if (typeof color === 'string' && color.startsWith('#')) {
+      const r = parseInt(color.slice(1, 3), 16);
+      const g = parseInt(color.slice(3, 5), 16);
+      const b = parseInt(color.slice(5, 7), 16);
+      return p.color(r, g, b, a);
+    }
+    return p.color(color[0], color[1], color[2], a);
+  }
+
+  function easeInOutCubic(x) {
+    return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+  }
+
+  function easeOutCubic(x) {
+    return 1 - Math.pow(1 - x, 3);
+  }
+
+  // ============================================================
+  // PLAYBACK CONTROL
+  // ============================================================
+  p.play = () => {
+    if (!playing) {
+      playing = true;
+      startTime = p.millis();
+    }
+  };
+
+  p.pause = () => {
+    if (playing) {
+      pausedElapsed += (p.millis() - startTime) / 1000;
+      playing = false;
+    }
+  };
+
+  p.restart = () => {
+    playing = false;
+    elapsed = 0;
+    pausedElapsed = 0;
+    startTime = p.millis();
+  };
+};
+
+// ============================================================
+// INIT
+// ============================================================
+const myp5 = new p5(sketch, document.body);
+
+// Controls
+document.getElementById('playBtn').addEventListener('click', () => {
+  if (myp5.playing) {
+    myp5.pause();
+    document.getElementById('playBtn').textContent = '▶ PLAY';
+  } else {
+    myp5.play();
+    document.getElementById('playBtn').textContent = '■ PAUSE';
+  }
+});
+
+document.getElementById('restartBtn').addEventListener('click', () => {
+  myp5.restart();
+  document.getElementById('playBtn').textContent = '▶ PLAY';
+});
+
+// HUD dots
+let hudDots = '';
+SCENES.forEach(() => { hudDots += '<span class="dot"></span>'; });
+document.querySelector('#hud').insertAdjacentHTML('beforeend', hudDots);
+</script>
+</body>
+</html>

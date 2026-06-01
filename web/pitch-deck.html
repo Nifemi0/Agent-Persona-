@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agent Identity Registry — Pitch Deck</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: #000;
+    color: #f0f0fa;
+    font-family: 'Inter', system-ui, sans-serif;
+    overflow: hidden;
+    width: 100vw;
+    height: 100vh;
+  }
+
+  /* === CRT scanline overlay === */
+  .crt {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+      0deg,
+      rgba(0,0,0,0.08) 0px,
+      rgba(0,0,0,0.08) 1px,
+      transparent 1px,
+      transparent 3px
+    );
+  }
+  .crt::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.4) 100%);
+  }
+
+  /* === Slide deck wrapper === */
+  .deck {
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .slides {
+    display: flex;
+    width: 1000%;
+    height: 100%;
+    transition: transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+
+  .slide {
+    width: 100vw;
+    height: 100vh;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 64px 80px;
+    position: relative;
+    background: #000;
+  }
+
+  /* === Navigation === */
+  .nav {
+    position: fixed;
+    bottom: 32px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 9998;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    background: rgba(0,0,0,0.75);
+    backdrop-filter: blur(8px);
+    padding: 10px 20px;
+    border-radius: 40px;
+    border: 1px solid rgba(240,240,250,0.08);
+  }
+  .nav-btn {
+    background: none;
+    border: none;
+    color: #f0f0fa;
+    font-size: 18px;
+    cursor: pointer;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s, color 0.2s;
+    font-family: 'Inter', sans-serif;
+    font-weight: 500;
+  }
+  .nav-btn:hover { background: rgba(245,158,11,0.15); }
+  .nav-btn.active { color: #F59E0B; background: rgba(245,158,11,0.12); }
+  .nav-arrow {
+    background: rgba(245,158,11,0.1);
+    border: 1px solid rgba(245,158,11,0.3);
+    font-size: 16px;
+    line-height: 1;
+  }
+  .nav-arrow:hover { background: rgba(245,158,11,0.25); }
+
+  /* === Typography === */
+  h1 { font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 72px; color: #f0f0fa; letter-spacing: -1px; }
+  h1 .gold { color: #F59E0B; }
+  h2 { font-family: 'JetBrains Mono', monospace; font-weight: 600; font-size: clamp(48px, 5vw, 64px); color: #f0f0fa; letter-spacing: -0.5px; }
+  h2 .gold { color: #F59E0B; }
+  .section-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 400;
+    font-size: 13px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: #F59E0B;
+    margin-bottom: 16px;
+  }
+  .subtitle {
+    font-size: 24px;
+    color: #94a3b8;
+    font-weight: 400;
+    margin-top: 12px;
+  }
+  p { font-size: 22px; line-height: 1.6; color: #f0f0fa; font-weight: 300; }
+  p strong { font-weight: 600; color: #fff; }
+  p.muted { color: #94a3b8; font-size: 18px; }
+  .source { font-size: 12px; color: #64748b; margin-top: 8px; }
+
+  /* === Layout helpers === */
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 48px;
+    width: 100%;
+    max-width: 1400px;
+    margin-top: 32px;
+  }
+  .two-col .col { text-align: left; }
+  .col p { font-size: 20px; line-height: 1.65; }
+
+  .badge-row {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 28px;
+  }
+  .badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 8px 16px;
+    border-radius: 100px;
+    border: 1px solid rgba(245,158,11,0.3);
+    color: #F59E0B;
+    background: rgba(245,158,11,0.06);
+  }
+
+  .stat-card {
+    background: rgba(240,240,250,0.03);
+    border: 1px solid rgba(240,240,250,0.06);
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin-top: 16px;
+  }
+  .stat-card .num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 36px;
+    font-weight: 700;
+    color: #F59E0B;
+  }
+  .stat-card .label {
+    font-size: 14px;
+    color: #94a3b8;
+    margin-top: 4px;
+  }
+
+  /* === Flow / step cards === */
+  .flow-row {
+    display: flex;
+    gap: 24px;
+    justify-content: center;
+    align-items: stretch;
+    width: 100%;
+    max-width: 1300px;
+    margin-top: 36px;
+  }
+  .flow-step {
+    flex: 1;
+    background: rgba(240,240,250,0.03);
+    border: 1px solid rgba(240,240,250,0.06);
+    border-radius: 14px;
+    padding: 28px 24px;
+    text-align: center;
+    position: relative;
+  }
+  .flow-step .step-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    letter-spacing: 2px;
+    color: #F59E0B;
+    margin-bottom: 12px;
+  }
+  .flow-step .step-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 18px;
+    font-weight: 600;
+    color: #f0f0fa;
+    margin-bottom: 8px;
+  }
+  .flow-step p { font-size: 16px; color: #94a3b8; }
+  .flow-arrow {
+    font-size: 28px;
+    color: #F59E0B;
+    display: flex;
+    align-items: center;
+    padding: 0 4px;
+  }
+
+  /* === Architecture diagram === */
+  .arch-box {
+    display: inline-block;
+    background: rgba(240,240,250,0.04);
+    border: 1px solid rgba(245,158,11,0.2);
+    border-radius: 10px;
+    padding: 14px 22px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 15px;
+    color: #f0f0fa;
+  }
+  .arch-box.gold { border-color: #F59E0B; background: rgba(245,158,11,0.08); }
+  .arch-box.dim { border-color: rgba(240,240,250,0.08); color: #94a3b8; }
+
+  .arch-arrow { color: #F59E0B; font-size: 20px; margin: 0 12px; }
+  .arch-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+  }
+
+  .arch-diagram {
+    margin-top: 36px;
+    text-align: center;
+  }
+  .arch-diagram .line {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 16px;
+    color: #f0f0fa;
+    line-height: 2.2;
+  }
+  .arch-diagram .line .hl { color: #F59E0B; }
+  .arch-diagram .line .dim { color: #94a3b8; }
+
+  /* === Tech grid === */
+  .tech-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    gap: 16px;
+    width: 100%;
+    max-width: 1300px;
+    margin-top: 36px;
+  }
+  .tech-card {
+    background: rgba(240,240,250,0.03);
+    border: 1px solid rgba(240,240,250,0.06);
+    border-radius: 12px;
+    padding: 20px 16px;
+    text-align: center;
+  }
+  .tech-card .name {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 16px;
+    font-weight: 600;
+    color: #f0f0fa;
+  }
+  .tech-card .desc {
+    font-size: 13px;
+    color: #94a3b8;
+    margin-top: 6px;
+  }
+  .tech-card.highlight {
+    border-color: rgba(245,158,11,0.3);
+    background: rgba(245,158,11,0.06);
+  }
+
+  /* === Roadmap === */
+  .roadmap-list {
+    width: 100%;
+    max-width: 1100px;
+    margin-top: 32px;
+  }
+  .roadmap-item {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 16px 0;
+    border-bottom: 1px solid rgba(240,240,250,0.05);
+  }
+  .roadmap-item:last-child { border-bottom: none; }
+  .roadmap-item .icon { font-size: 24px; color: #F59E0B; width: 36px; text-align: center; }
+  .roadmap-item .text {
+    font-size: 20px;
+    font-weight: 400;
+    color: #f0f0fa;
+  }
+  .roadmap-item .text .dim { color: #94a3b8; font-size: 16px; font-weight: 300; }
+
+  /* === Trust flow === */
+  .trust-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+    max-width: 900px;
+    margin-top: 28px;
+  }
+  .trust-step {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 10px 20px;
+    background: rgba(240,240,250,0.03);
+    border-radius: 8px;
+    border-left: 3px solid #F59E0B;
+  }
+  .trust-step .code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    color: #F59E0B;
+    min-width: 40px;
+  }
+  .trust-step p { font-size: 16px; color: #f0f0fa; }
+
+  .result-box {
+    margin-top: 28px;
+    padding: 20px 28px;
+    background: rgba(245,158,11,0.06);
+    border: 1px solid rgba(245,158,11,0.25);
+    border-radius: 12px;
+    text-align: center;
+  }
+  .result-box p { font-size: 19px; color: #F59E0B; font-weight: 500; }
+
+  /* === Demo === */
+  .demo-box {
+    background: rgba(240,240,250,0.03);
+    border: 1px solid rgba(240,240,250,0.06);
+    border-radius: 14px;
+    padding: 32px 40px;
+    margin-top: 32px;
+    width: 100%;
+    max-width: 1000px;
+  }
+  .demo-box p { font-size: 18px; color: #f0f0fa; }
+  .demo-box .mono {
+    font-family: 'JetBrains Mono', monospace;
+    color: #F59E0B;
+  }
+
+  .demo-link {
+    display: inline-block;
+    margin-top: 20px;
+    padding: 12px 32px;
+    background: rgba(245,158,11,0.1);
+    border: 1px solid #F59E0B;
+    border-radius: 8px;
+    color: #F59E0B;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 16px;
+    text-decoration: none;
+    transition: background 0.2s;
+  }
+  .demo-link:hover { background: rgba(245,158,11,0.2); }
+
+  /* === Footer === */
+  .slide-footer {
+    position: absolute;
+    bottom: 80px;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 13px;
+    color: #64748b;
+    font-family: 'Inter', sans-serif;
+  }
+  .slide-footer .gold { color: #F59E0B; }
+
+  /* === Slide-specific === */
+
+  /* Slide 1: Title */
+  #slide-1 h1 { font-size: 82px; }
+  #slide-1 .subtitle { font-size: 26px; color: #94a3b8; }
+
+  /* Slide 10: Closing */
+  #slide-10 h1 { font-size: 72px; }
+  #slide-10 .links-row {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 32px;
+  }
+  #slide-10 .links-row a {
+    color: #F59E0B;
+    text-decoration: none;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    padding: 10px 24px;
+    border: 1px solid rgba(245,158,11,0.3);
+    border-radius: 8px;
+    transition: background 0.2s;
+  }
+  #slide-10 .links-row a:hover { background: rgba(245,158,11,0.12); }
+
+  /* === Keyboard nav === */
+  @media (hover: none) { .nav { display: flex; } }
+</style>
+</head>
+<body>
+<div class="crt"></div>
+
+<div class="deck">
+<div class="slides" id="slides">
+
+<!-- ============================================================ -->
+<!-- SLIDE 1: TITLE                                               -->
+<!-- ============================================================ -->
+<section class="slide" id="slide-1">
+  <div class="section-label">Mantle Turing Test 2026</div>
+  <h1>Agent Identity<br><span class="gold">Registry</span></h1>
+  <p class="subtitle">ERC-8004 aligned agent identity on Mantle</p>
+  <div class="badge-row">
+    <span class="badge">Mantle Turing Test 2026</span>
+    <span class="badge">Agentic Wallets &amp; Economy</span>
+    <span class="badge">ERC-8004 Aligned</span>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- SLIDE 2: PROBLEM                                             -->
+<!-- ============================================================ -->
+<section class="slide" id="slide-2">
+  <div class="section-label">Problem</div>
+  <h2>Identity is the missing<br>layer for autonomous agents</h2>
+  <div class="two-col">
+    <div class="col">
+      <p style="font-size:20px; font-weight:600; color:#F59E0B; margin-bottom:10px;">Without on-chain identity…</p>
+      <p>Agents are ephemeral — indistinguishable, non-reputable, untrustable. No way to prove who built, launched, or vouches for an agent.</p>
+      <div class="stat-card">
+        <div class="num">15M+</div>
+        <div class="label">AI agents projected by 2027 <span style="color:#64748b;">(Gartner)</span></div>
+      </div>
+    </div>
+    <div class="col">
+      <p style="font-size:20px; font-weight:600; color:#F59E0B; margin-bottom:10px;">Centralized gatekeepers create fragility</p>
+      <p>Closed registries, revocable API keys, platform risk. Agents cannot own their identity — they borrow it.</p>
+      <div class="stat-card">
+        <div class="num">$38B</div>
+        <div class="label">Lost to AI-related fraud annually <span style="color:#64748b;">(Deloitte 2025)</span></div>
+      </div>
+    </div>
+  </div>
+  <p class="source" style="margin-top:24px;">Sources: Gartner "Market Trends: AI Agents" 2025 | Deloitte "AI Fraud Report" 2025</p>
+</section>
+
+<!-- ============================================================ -->
+<!-- SLIDE 3: SOLUTION                                            -->
+<!-- ============================================================ -->
+<section class="slide" id="slide-3">
+  <div class="section-label">Solution</div>
+  <h2>One-click agent identity<br><span class="gold">on Mantle</span></h2>
+  <div class="flow-row">
+    <div class="flow-step">
+      <div class="step-num">STEP 01</div>
+      <div class="step-title">Sign</div>
+      <p>Prove wallet ownership via EIP-712 signature</p>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">
+      <div class="step-num">STEP 02</div>
+      <div class="step-title">Upload</div>
+      <p>Agent metadata (name, bio, avatar) to IPFS</p>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">
+      <div class="step-num">STEP 03</div>
+      <div class="step-title">Register</div>
+      <p>Mint ERC-8004 soulbound token on Mantle Sepolia</p>
+    </div>
+  </div>
+  <div class="badge-row" style="margin-top:28px;">
+    <span class="badge">~128K gas per registration</span>
+    <span class="badge">3-5 seconds to complete</span>
+    <span class="badge">No upfront cost — just gas</span>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- SLIDE 4: ARCHITECTURE                                        -->
+<!-- ============================================================ -->
+<section class="slide" id="slide-4">
+  <div class="section-label">Architecture</div>
+  <h2>Simple, composable,<br><span class="gold">on-chain</span></h2>
+  <div class="arch-diagram">
+    <div class="line">
+      <span class="arch-box">🧠 Wallet<br><span class="dim">(MetaMask)</span></span>
+      <span class="arch-arrow">⟶</span>
+      <span class="arch-box gold">Frontend<br><span class="dim">(React/Vite)</span></span>
+      <span class="arch-arrow">⟶</span>
+      <span class="arch-box">IPFS<br><span class="dim">(Pinata)</span></span>
+      <span class="arch-arrow">⟶</span>
+      <span class="arch-box gold">Contract<br><span class="dim">(ERC-8004)</span></span>
+      <span class="arch-arrow">⟶</span>
+      <span class="arch-box">Mantle<br>Sepolia</span>
+    </div>
+  </div>
+  <div class="badge-row" style="margin-top:32px;">
+    <span class="badge">ERC-721 URIStorage</span>
+    <span class="badge">Soulbound (non-transferable)</span>
+    <span class="badge">EIP-712 Wallet Verification</span>
+  </div>
+  <p class="muted" style="margin-top:24px;">
+    Contract: <span style="font-family:'JetBrains Mono',monospace; color:#F59E0B;">0xCd2A74Cff974B2B962A5AA46D3aBe3F7b137509D</span>
+  </p>
+</section>
+
+<!-- ============================================================ -->
+<!-- SLIDE 5: TRUST MODEL                                         -->
+<!-- ============================================================ -->
+<section class="slide" id="slide-5">
+  <div class="section-label">Trust Model</div>
+  <h2>No gatekeeper —<br><span class="gold">cryptographic trust</span></h2>
+  <div class="trust-steps">
+    <div class="trust-step">
+      <span class="code">01</span>
+      <p>Look up <strong>agentId</strong> on-chain</p>
+    </div>
+    <div class="trust-step">
+      <span class="code">02</span>
+      <p>Get <strong>owner</strong> + <strong>tokenURI</strong></p>
+    </div>
+    <div class="trust-step">
+      <span class="code">03</span>
+      <p>Fetch metadata from <strong>IPFS</strong></p>
+    </div>
+    <div class="trust-step">
+      <span class="code">04</span>
+      <p>Recover <strong>signer</strong> from EIP-712 signature</p>
+    </div>
+    <div class="trust-step">
+      <span class="code">05</span>
+      <p>Compare signer <strong>==</strong> owner</p>
+    </div>
+  </div>
+  <div class="result-box">
+    <p>Any agent independently verifies any other agent. No server. No badges. Pure math.</p>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- SLIDE 6: ERC-8004 ALIGNMENT                                  -->
+<!-- ============================================================ -->
+<section class="slide" id="slide-6">
+  <div class="section-label">ERC-8004 Alignment</div>
+  <h2>Identity Registry —<br><span class="gold">fully implemented</span></h2>
+  <div style="width:100%; max-width:900px; margin-top:32px;">
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
+      <div style="display:flex; align-items:center; gap:12px; padding:12px 16px; background:rgba(240,240,250,0.03); border-radius:8px;">
+        <span style="color:#22c55e; font-size:18px;">✓</span>
+        <span style="font-family:'JetBrains Mono',monospace; font-size:15px; color:#f0f0fa;">incremental agentId</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:12px; padding:12px 16px; background:rgba(240,240,250,0.03); border-radius:8px;">
+        <span style="color:#22c55e; font-size:18px;">✓</span>
+        <span style="font-family:'JetBrains Mono',monospace; font-size:15px; color:#f0f0fa;">register() returns uint256</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:12px; padding:12px 16px; background:rgba(240,240,250,0.03); border-radius:8px;">
+        <span style="color:#22c55e; font-size:18px;">✓</span>
+        <span style="font-family:'JetBrains Mono',monospace; font-size:15px; color:#f0f0fa;">setAgentURI() with event</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:12px; padding:12px 16px; background:rgba(240,240,250,0.03); border-radius:8px;">
+        <span style="color:#22c55e; font-size:18px;">✓</span>
+        <span style="font-family:'JetBrains Mono',monospace; font-size:15px; color:#f0f0fa;">getMetadata / setMetadata</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:12px; padding:12px 16px; background:rgba(240,240,250,0.03); border-radius:8px;">
+        <span style="color:#22c55e; font-size:18px;">✓</span>
+        <span style="font-family:'JetBrains Mono',monospace; font-size:15px; color:#f0f0fa;">agentWallet() EIP-712</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:12px; padding:12px 16px; background:rgba(245,158,11,0.06); border:1px solid rgba(245,158,11,0.2); border-radius:8px;">
+        <span style="color:#94a3b8; font-size:18px;">○</span>
+        <span style="font-family:'JetBrains Mono',monospace; font-size:15px; color:#94a3b8;">Reputation Registry (future)</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:12px; padding:12px 16px; background:rgba(245,158,11,0.06); border:1px solid rgba(245,158,11,0.2); border-radius:8px;">
+        <span style="color:#94a3b8; font-size:18px;">○</span>
+        <span style="font-family:'JetBrains Mono',monospace; font-size:15px; color:#94a3b8;">Validation Registry (future)</span>
+      </div>
+    </div>
+  </div>
+  <p class="muted" style="margin-top:24px;">
+    ERC-8004 defines three registries: Identity, Reputation, Validation. Identity = fully implemented.
+  </p>
+</section>
+
+<!-- ============================================================ -->
+<!-- SLIDE 7: TECH STACK                                          -->
+<!-- ============================================================ -->
+<section class="slide" id="slide-7">
+  <div class="section-label">Tech Stack</div>
+  <h2>Built on battle-tested<br><span class="gold">infrastructure</span></h2>
+  <div class="tech-grid">
+    <div class="tech-card highlight">
+      <div class="name">Solidity</div>
+      <div class="desc">Foundry + OpenZeppelin</div>
+    </div>
+    <div class="tech-card">
+      <div class="name">Mantle Sepolia</div>
+      <div class="desc">Chain ID 5003 · low fees</div>
+    </div>
+    <div class="tech-card">
+      <div class="name">React</div>
+      <div class="desc">Vite + Tailwind CSS</div>
+    </div>
+    <div class="tech-card">
+      <div class="name">ethers.js</div>
+      <div class="desc">v6 · EIP-1193 provider</div>
+    </div>
+    <div class="tech-card">
+      <div class="name">IPFS</div>
+      <div class="desc">Pinata gateway · metadata</div>
+    </div>
+    <div class="tech-card highlight">
+      <div class="name">OpenZeppelin</div>
+      <div class="desc">ERC-721 · ERC-165 · Ownable</div>
+    </div>
+    <div class="tech-card">
+      <div class="name">EIP-712</div>
+      <div class="desc">Typed structured data signing</div>
+    </div>
+    <div class="tech-card">
+      <div class="name">ERC-8004</div>
+      <div class="desc">Agent Identity Registry spec</div>
+    </div>
+  </div>
+  <p class="muted" style="margin-top:24px;">
+    Contract: <span style="font-family:'JetBrains Mono',monospace; color:#F59E0B;">eip155:5003:0xCd2A74Cff974B2B962A5AA46D3aBe3F7b137509D</span>
+  </p>
+</section>
+
+<!-- ============================================================ -->
+<!-- SLIDE 8: DEMO                                                -->
+<!-- ============================================================ -->
+<section class="slide" id="slide-8">
+  <div class="section-label">Live Demo</div>
+  <h2>See it in action<br><span class="gold">right now</span></h2>
+  <div class="demo-box">
+    <p style="font-family:'JetBrains Mono',monospace; font-size:15px; color:#94a3b8; margin-bottom:16px;">
+      🌐 <span style="color:#F59E0B;">found-toxic-caribbean-trim.trycloudflare.com</span>
+    </p>
+    <p><strong>1.</strong> Connect MetaMask (Mantle Sepolia)</p>
+    <p style="margin-top:8px;"><strong>2.</strong> Enter agent name &amp; bio</p>
+    <p style="margin-top:8px;"><strong>3.</strong> Click <span style="color:#F59E0B; font-weight:600;">Register</span></p>
+    <p style="margin-top:8px;"><strong>4.</strong> Sign the EIP-712 message</p>
+    <p style="margin-top:8px;"><strong>5.</strong> Done. Verify by name or agentId.</p>
+    <a href="https://found-toxic-caribbean-trim.trycloudflare.com" target="_blank" class="demo-link">→ Launch Live Demo</a>
+  </div>
+  <p class="muted" style="margin-top:16px;">
+    Deployed on Mantle Sepolia — grab test ETH from the faucet
+  </p>
+</section>
+
+<!-- ============================================================ -->
+<!-- SLIDE 9: ROADMAP                                             -->
+<!-- ============================================================ -->
+<section class="slide" id="slide-9">
+  <div class="section-label">Roadmap</div>
+  <h2>Identity is just the<br><span class="gold">beginning</span></h2>
+  <div class="roadmap-list">
+    <div class="roadmap-item">
+      <span class="icon">①</span>
+      <div class="text">Reputation Registry <span class="dim">— on-chain agent feedback &amp; ratings</span></div>
+    </div>
+    <div class="roadmap-item">
+      <span class="icon">②</span>
+      <div class="text">Validation Registry <span class="dim">— stake-secured agent verification</span></div>
+    </div>
+    <div class="roadmap-item">
+      <span class="icon">③</span>
+      <div class="text">Multi-chain support <span class="dim">— deploy across Mantle, Ethereum, Base</span></div>
+    </div>
+    <div class="roadmap-item">
+      <span class="icon">④</span>
+      <div class="text">ENS Integration <span class="dim">— agent-name.eth resolution</span></div>
+    </div>
+    <div class="roadmap-item">
+      <span class="icon">⑤</span>
+      <div class="text">A2A Handshake Protocol <span class="dim">— autonomous agent-to-agent trust establishment</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- SLIDE 10: CLOSING                                            -->
+<!-- ============================================================ -->
+<section class="slide" id="slide-10">
+  <div class="section-label">Agent Identity Registry</div>
+  <h1>Agent Identity<br><span class="gold">Registry</span></h1>
+  <p class="subtitle" style="margin-top:8px;">ERC-8004 aligned · On Mantle Sepolia</p>
+  <div class="links-row">
+    <a href="https://found-toxic-caribbean-trim.trycloudflare.com" target="_blank">🌐 Live Demo</a>
+    <a href="https://sepolia.mantlescan.xyz/address/0xCd2A74Cff974B2B962A5AA46D3aBe3F7b137509D" target="_blank">📜 Contract</a>
+    <a href="#" target="_blank">GitHub</a>
+  </div>
+  <div class="badge-row" style="margin-top:24px;">
+    <span class="badge">Mantle Turing Test 2026</span>
+    <span class="badge">Agentic Wallets &amp; Economy</span>
+  </div>
+  <p class="slide-footer">Built solo in 8 days · <span class="gold">Agent Identity Registry</span></p>
+</section>
+
+</div><!-- /slides -->
+</div><!-- /deck -->
+
+<!-- === Navigation === -->
+<nav class="nav" id="nav">
+  <button class="nav-btn nav-arrow" onclick="navigate(-1)" aria-label="Previous">‹</button>
+  <div id="nav-dots"></div>
+  <button class="nav-btn nav-arrow" onclick="navigate(1)" aria-label="Next">›</button>
+</nav>
+
+<script>
+  (function() {
+    const slides = document.querySelectorAll('.slide');
+    const total = slides.length;
+    let current = 0;
+    const dotsContainer = document.getElementById('nav-dots');
+
+    // Build dots
+    for (let i = 0; i < total; i++) {
+      const btn = document.createElement('button');
+      btn.className = 'nav-btn' + (i === 0 ? ' active' : '');
+      btn.textContent = i + 1;
+      btn.setAttribute('data-index', i);
+      btn.addEventListener('click', function() { goTo(parseInt(this.getAttribute('data-index'))); });
+      dotsContainer.appendChild(btn);
+    }
+
+    function goTo(index) {
+      if (index < 0) index = 0;
+      if (index >= total) index = total - 1;
+      current = index;
+      document.getElementById('slides').style.transform = 'translateX(-' + (current * 100) + 'vw)';
+      document.querySelectorAll('#nav-dots .nav-btn').forEach((b, i) => {
+        b.className = 'nav-btn' + (i === current ? ' active' : '');
+      });
+    }
+
+    window.navigate = function(dir) {
+      goTo(current + dir);
+    };
+
+    window.goTo = goTo;
+
+    // Keyboard arrows
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
+        e.preventDefault();
+        goTo(current + 1);
+      } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        goTo(current - 1);
+      }
+    });
+
+    // Touch/swipe support
+    let touchStartX = 0;
+    let touchEndX = 0;
+    document.addEventListener('touchstart', function(e) {
+      touchStartX = e.changedTouches[0].screenX;
+    }, { passive: true });
+    document.addEventListener('touchend', function(e) {
+      touchEndX = e.changedTouches[0].screenX;
+      const diff = touchStartX - touchEndX;
+      if (Math.abs(diff) > 60) {
+        if (diff > 0) goTo(current + 1);
+        else goTo(current - 1);
+      }
+    }, { passive: true });
+  })();
+</script>
+
+</body>
+</html>

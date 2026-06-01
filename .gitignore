@@ -1,20 +1,8 @@
-# Compiler files
-cache/
-out/
-
-# Commonly ignored directories
-.logs/
-.ignore/
-
-# Ignores development broadcast logs
-!/broadcast
-/broadcast/*/31337/
-/broadcast/**/dry-run/
-
-# Docs
-docs/
-
-# Dotenv file
+node_modules/
+web/node_modules/
+web/p5.min.js
 .env
-.env.*
-!.env.example
+*.log
+.DS_Store
+out/*
+!out/last_run.json

@@ -1,8 +1,10 @@
-# Verifier Library
+# Verifier library (JS)
 
-This folder will hold a lightweight JS/TS library that:
+This module exposes functions to:
+- fetch persona CID from onchain registry (ethers)
+- download metadata JSON from IPFS (dweb.link) or local placeholder
+- verify EIP-712 signature against owner address
 
-- Fetches persona CID from on-chain PersonaRegistry
-- Downloads and validates the EIP-712 signed JSON
-- Verifies the signature matches the owner address
-- Provides an API to return badge levels and attestation status
+Usage:
+const {verifyPersonaOnChain} = require('./index.js')
+await verifyPersonaOnChain(rpcUrl, registryAddress, personaId)

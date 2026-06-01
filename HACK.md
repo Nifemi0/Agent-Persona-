@@ -46,9 +46,15 @@ Paths created
 - /home/ubuntu/.hermes/hermes-agent/hacks/mantle-persona-registry/
 - See files listed under "Repository structure" above.
 
-If this looks good reply "Proceed" and I will:
-- Add a Foundry project scaffold under contracts/
-- Implement PersonaRegistry.sol minimal functions + events
-- Add a basic Next.js dashboard skeleton in web/dashboard/
+Phases & implementation
+- Phase 1 (done): on‑chain registry + tests
+- Phase 2 (in progress): offchain CLI signing & IPFS, verifier, integration tests
+- Phase 3 (pending): Dashboard, PersonaSBT, attestations, CI, E2E tests
+
+Planned immediate work:
+- Implement CLI signing & web3.storage pinning (done)
+- Implement verifier signature validation (done)
+- Implement PersonaSBT (done)
+- Scaffold integration test runner (placeholder)
 
 If you want any different folder names or additional subfolders, tell me now.

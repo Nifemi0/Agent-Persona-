@@ -1,0 +1,26 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Persona Metadata",
+  "type": "object",
+  "properties": {
+    "name": {"type": "string"},
+    "description": {"type": "string"},
+    "model": {
+      "type": "object",
+      "properties": {
+        "provider": {"type": "string"},
+        "model_id": {"type": "string"},
+        "model_version": {"type": "string"}
+      },
+      "required": ["provider", "model_id"]
+    },
+    "declared_training_hash": {"type": "string"},
+    "constraints": {"type": "array", "items": {"type": "string"}},
+    "contact": {"type": "string"},
+    "publicSigningKey": {"type": "string"},
+    "attestations": {"type": "array", "items": {"type": "object"}},
+    "timestamp": {"type": "string"},
+    "nonce": {"type": "string"}
+  },
+  "required": ["name","model","timestamp","nonce"]
+}

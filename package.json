@@ -1,0 +1,13 @@
+{
+  "name": "mantle-persona",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "offchain/cli"
+  ],
+  "dependencies": {
+    "ethers": "^6.16.0",
+    "nft.storage": "^6.2.0",
+    "solc": "^0.8.35"
+  }
+}

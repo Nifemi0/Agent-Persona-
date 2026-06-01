@@ -333,6 +333,27 @@ export default function App() {
                   </div>
                 </div>
 
+                {/* Reputation placeholder */}
+                <div className="p-3 rounded-lg bg-surface-elevated/50 border border-border/40">
+                  <p className="text-foreground-secondary text-[11px] tracking-wider uppercase mb-2 font-body text-center">
+                    Reputation
+                  </p>
+                  <div className="flex justify-center gap-6">
+                    <div className="text-center">
+                      <span className="block text-foreground text-sm font-heading font-bold">0</span>
+                      <span className="block text-foreground-muted text-[9px] tracking-wider uppercase font-body">Interactions</span>
+                    </div>
+                    <div className="text-center">
+                      <span className="block text-foreground text-sm font-heading font-bold">0</span>
+                      <span className="block text-foreground-muted text-[9px] tracking-wider uppercase font-body">Attestations</span>
+                    </div>
+                    <div className="text-center">
+                      <span className="block text-foreground text-sm font-heading font-bold">0</span>
+                      <span className="block text-foreground-muted text-[9px] tracking-wider uppercase font-body">Score</span>
+                    </div>
+                  </div>
+                </div>
+
                 {/* ERC-8004 badge */}
                 <div className="p-3 rounded-lg bg-surface-elevated/50 border border-border/40 text-center">
                   <p className="text-foreground-muted text-[10px] font-body tracking-wider uppercase">
@@ -455,8 +476,29 @@ export default function App() {
                   </div>
                 </div>
 
-                {verifyResult.agentURI && (
-                  <div className="mt-2 pt-2 border-t border-border/40">
+                  {/* Reputation placeholder */}
+                  <div className="pt-2 border-t border-border/40">
+                    <p className="text-foreground-secondary text-[10px] tracking-wider uppercase mb-2 font-body text-center">
+                      Reputation
+                    </p>
+                    <div className="flex justify-center gap-5">
+                      <div className="text-center">
+                        <span className="block text-foreground text-sm font-heading font-bold">0</span>
+                        <span className="block text-foreground-muted text-[8px] tracking-wider uppercase font-body">Interactions</span>
+                      </div>
+                      <div className="text-center">
+                        <span className="block text-foreground text-sm font-heading font-bold">0</span>
+                        <span className="block text-foreground-muted text-[8px] tracking-wider uppercase font-body">Attestations</span>
+                      </div>
+                      <div className="text-center">
+                        <span className="block text-foreground text-sm font-heading font-bold">0</span>
+                        <span className="block text-foreground-muted text-[8px] tracking-wider uppercase font-body">Score</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {verifyResult.agentURI && (
+                  <div className="pt-2 border-t border-border/40">
                     <p className="text-foreground-muted text-[10px] font-body tracking-wider text-center">
                       Agent URI: {verifyResult.agentURI.substring(0, 40)}...
                     </p>

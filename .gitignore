@@ -6,12 +6,14 @@ web/p5.min.js
 .DS_Store
 out/*
 !out/last_run.json
+web/.env
 
 # Generated audio assets (easily recreated)
 *.wav
 
-# Raw screen recording source (large, not needed in repo)
+# Raw screen recording source
 web/demo-recording.mp4
 
 # Backups
 *.backup
+.vercel

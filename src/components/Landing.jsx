@@ -63,7 +63,7 @@ export default function Landing({ onEnter }) {
           {/* CTA */}
           <button
             onClick={onEnter}
-            className="group relative px-8 sm:px-10 py-3.5 sm:py-4 border border-[#f0f0fa]/20 text-[#f0f0fa] font-body text-[10px] sm:text-[11px] tracking-[0.25em] uppercase transition-all duration-300 hover:border-[#f0f0fa]/40 hover:bg-[#f0f0fa]/[0.03] active:scale-[0.97]"
+            className="group relative px-8 sm:px-10 py-3.5 sm:py-4 rounded border border-[#f0f0fa]/20 text-[#f0f0fa] font-body text-[10px] sm:text-[11px] tracking-[0.25em] uppercase transition-all duration-300 hover:border-[#f0f0fa]/40 hover:bg-[#f0f0fa]/[0.03] active:scale-[0.97]"
           >
             <span className="relative z-10">Enter Registry</span>
             <span className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500">

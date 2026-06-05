@@ -34,7 +34,7 @@ export default function WalletInfo({ account, chainId, onConnect, onDisconnect, 
               </div>
               <button
                 onClick={onDisconnect}
-                className="text-[#f0f0fa]/30 hover:text-red-500 transition-colors duration-200 ml-1 p-1"
+                className="text-[#f0f0fa]/30 hover:text-red-500 transition-colors duration-200 ml-1 p-1 rounded"
                 title="Disconnect"
               >
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -51,7 +51,7 @@ export default function WalletInfo({ account, chainId, onConnect, onDisconnect, 
             <button
               onClick={onSwitchNetwork}
               disabled={loading}
-              className="w-full py-2.5 px-4 border border-red-500/30 bg-red-500/5 text-red-500 font-body text-xs press-scale transition-all duration-200 hover:bg-red-500/10 disabled:opacity-50 tracking-wider uppercase"
+              className="w-full py-2.5 px-4 rounded border border-red-500/30 bg-red-500/5 text-red-500 font-body text-xs press-scale transition-all duration-200 hover:bg-red-500/10 disabled:opacity-50 tracking-wider uppercase"
             >
               Switch to Mantle Sepolia
             </button>
@@ -61,7 +61,7 @@ export default function WalletInfo({ account, chainId, onConnect, onDisconnect, 
         <button
           onClick={onConnect}
           disabled={loading}
-          className="w-full py-3 px-4 bg-[rgba(240,240,250,0.02)] hover:bg-[rgba(240,240,250,0.05)] border border-white/[0.08] text-[#f0f0fa] font-body text-xs sm:text-sm press-scale transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed tracking-wider uppercase"
+          className="w-full py-3 px-4 rounded bg-[rgba(240,240,250,0.02)] hover:bg-[rgba(240,240,250,0.05)] border border-white/[0.08] text-[#f0f0fa] font-body text-xs sm:text-sm press-scale transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed tracking-wider uppercase"
         >
           {loading ? 'Connecting...' : 'Connect Wallet'}
         </button>

@@ -182,8 +182,8 @@ export default function App() {
   const ghostBorder = 'border border-white/[0.08]'
   const ghostInput = 'w-full px-4 py-3 bg-[rgba(240,240,250,0.02)] border border-white/[0.08] text-[#f0f0fa] font-body text-sm placeholder:text-[#f0f0fa]/20 focus:outline-none focus:border-white/20 focus:shadow-[0_0_12px_rgba(240,240,250,0.04)] transition-all duration-200'
   const ghostLabel = 'block text-[#f0f0fa]/60 font-body text-[10px] tracking-wider uppercase mb-2'
-  const ghostBtn = 'w-full py-3 border border-white/[0.12] text-[#f0f0fa] font-body text-xs tracking-wider uppercase press-scale transition-all duration-200 hover:bg-[rgba(240,240,250,0.03)] hover:border-white/[0.2] disabled:opacity-30 disabled:cursor-not-allowed active:scale-[0.97]'
-  const ghostPrimaryBtn = 'w-full py-3 bg-[#f0f0fa] text-[#000] font-body text-xs tracking-wider uppercase font-bold press-scale transition-all duration-200 hover:bg-white disabled:opacity-30 disabled:cursor-not-allowed active:scale-[0.97]'
+  const ghostBtn = 'w-full py-3 rounded border border-white/[0.12] text-[#f0f0fa] font-body text-xs tracking-wider uppercase press-scale transition-all duration-200 hover:bg-[rgba(240,240,250,0.03)] hover:border-white/[0.2] disabled:opacity-30 disabled:cursor-not-allowed active:scale-[0.97]'
+  const ghostPrimaryBtn = 'w-full py-3 rounded bg-[#f0f0fa] text-[#000] font-body text-xs tracking-wider uppercase font-bold press-scale transition-all duration-200 hover:bg-white disabled:opacity-30 disabled:cursor-not-allowed active:scale-[0.97]'
 
   return (
     <div className="min-h-screen bg-[#000] scanlines">
@@ -401,7 +401,7 @@ export default function App() {
             <div className="flex gap-2">
               <button
                 onClick={() => setVerifyMode('name')}
-                className={`px-3 py-1.5 text-[9px] tracking-wider uppercase font-body font-bold transition-all ${
+                className={`px-3 py-1.5 rounded text-[9px] tracking-wider uppercase font-body font-bold transition-all ${
                   verifyMode === 'name'
                     ? 'bg-[rgba(240,240,250,0.1)] text-[#f0f0fa] border border-white/20'
                     : 'text-[#f0f0fa]/30 border border-white/[0.06] hover:text-[#f0f0fa]/60'
@@ -411,7 +411,7 @@ export default function App() {
               </button>
               <button
                 onClick={() => setVerifyMode('id')}
-                className={`px-3 py-1.5 text-[9px] tracking-wider uppercase font-body font-bold transition-all ${
+                className={`px-3 py-1.5 rounded text-[9px] tracking-wider uppercase font-body font-bold transition-all ${
                   verifyMode === 'id'
                     ? 'bg-[rgba(240,240,250,0.1)] text-[#f0f0fa] border border-white/20'
                     : 'text-[#f0f0fa]/30 border border-white/[0.06] hover:text-[#f0f0fa]/60'
@@ -436,7 +436,7 @@ export default function App() {
                 <button
                   onClick={handleVerify}
                   disabled={verifyLoading || !verifyInput.trim()}
-                  className="px-4 sm:px-5 py-3 bg-[#f0f0fa] text-[#000] font-body text-xs tracking-wider uppercase font-bold press-scale transition-all duration-200 disabled:opacity-30 disabled:cursor-not-allowed active:scale-[0.97] shrink-0"
+                  className="px-4 sm:px-5 py-3 rounded bg-[#f0f0fa] text-[#000] font-body text-xs tracking-wider uppercase font-bold press-scale transition-all duration-200 disabled:opacity-30 disabled:cursor-not-allowed active:scale-[0.97] shrink-0"
                 >
                   {verifyLoading ? (
                     <span className="inline-block w-4 h-4 border border-black/20 border-t-black rounded-full animate-spin" />

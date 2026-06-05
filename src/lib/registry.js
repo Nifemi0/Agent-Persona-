@@ -52,6 +52,69 @@ export function getAgentRegistry() {
 }
 
 /**
+ * Sign the persona name with the user's wallet (proves ownership).
+ * Returns the signature.
+ */
+export async function signPersonaName(provider, name) {
+  const signer = await provider.getSigner()
+  return await signer.signMessage(name)
+}
+
+/**
+ * Upload ERC-8004 metadata to IPFS via Pinata.
+ * Returns { cid, gatewayUrl, metadata }.
+ */
+export async function uploadMetadata(name, address, signature, website, twitter, github) {
+  const res = await fetch('/api/upload', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      name,
+      address,
+      signature,
+      description: `On-chain AI agent persona: ${name}`,
+      website: website || '',
+      twitter: twitter || '',
+      github: github || '',
+    }),
+  })
+  if (!res.ok) {
+    const err = await res.json()
+    throw new Error(err.error || 'Upload failed')
+  }
+  return await res.json()
+}
+
+/**
+ * Register on chain using ERC-8004 register(string agentURI).
+ * Returns { agentId, txHash, blockNumber, receipt, agentRegistry }.
+ */
+export async function registerOnChain(signer, cid) {
+  const agentURI = `ipfs://${cid}`
+  const contract = getRegistryContract(signer)
+  const tx = await contract["register(string)"](agentURI)
+  const receipt = await tx.wait()
+
+  // Parse the Registered event to get agentId
+  const registeredLog = receipt.logs.find((log) => {
+    try {
+      const parsed = contract.interface.parseLog({ topics: log.topics, data: log.data })
+      return parsed && parsed.name === 'Registered'
+    } catch { return false }
+  })
+  const agentId = registeredLog ? Number(registeredLog.args[0]) : null
+
+  return {
+    agentId,
+    agentURI,
+    txHash: receipt.hash,
+    blockNumber: receipt.blockNumber,
+    receipt,
+    agentRegistry: getAgentRegistry(),
+  }
+}
+
+/**
  * ONE-CLICK create: sign → upload to IPFS (ERC-8004 metadata) → register on chain.
  * Uses the new ERC-8004 register(string agentURI) interface.
  */

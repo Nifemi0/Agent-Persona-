@@ -1,14 +1,13 @@
-import { execSync } from 'child_process'
-import { writeFileSync, mkdtempSync } from 'fs'
-import { join } from 'path'
-import { tmpdir } from 'os'
-
 /**
- * Vite plugin that adds an `/api/upload` endpoint for IPFS uploads.
- * Accepts POST with JSON body, writes to temp file, runs `ipfs add`, returns CID.
- * Now builds ERC-8004 compliant registration metadata.
+ * Vite plugin that adds an `/api/upload` endpoint for IPFS uploads via Pinata.
+ * Accepts POST with JSON body, uploads to Pinata, returns CID.
+ * ERC-8004 compliant registration metadata.
+ *
+ * @param {string} pinataJwt - Pinata JWT for authentication
  */
-export function ipfsUploadPlugin() {
+export function ipfsUploadPlugin(pinataJwt = '') {
+  const PINATA_JWT = pinataJwt
+
   return {
     name: 'ipfs-upload',
     configureServer(server) {
@@ -22,7 +21,7 @@ export function ipfsUploadPlugin() {
 
         let body = ''
         req.on('data', (chunk) => { body += chunk })
-        req.on('end', () => {
+        req.on('end', async () => {
           try {
             const data = JSON.parse(body)
 
@@ -57,21 +56,28 @@ export function ipfsUploadPlugin() {
               createdAt: new Date().toISOString(),
             }
 
-            // Write to temp file
-            const tmpDir = mkdtempSync(join(tmpdir(), 'persona-'))
-            const tmpFile = join(tmpDir, 'persona.json')
-            writeFileSync(tmpFile, JSON.stringify(metadata, null, 2))
+            // Upload to Pinata via JSON pinning endpoint
+            const pinResponse = await fetch('https://api.pinata.cloud/pinning/pinJSONToIPFS', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${PINATA_JWT}`,
+              },
+              body: JSON.stringify({
+                pinataContent: metadata,
+                pinataMetadata: {
+                  name: `persona-${data.name}-${data.address.slice(0, 8)}.json`,
+                },
+              }),
+            })
 
-            // Upload to IPFS
-            const result = execSync(`ipfs add "${tmpFile}" --quieter --pin`, {
-              encoding: 'utf-8',
-              timeout: 15000,
-            }).trim()
+            if (!pinResponse.ok) {
+              const errText = await pinResponse.text()
+              throw new Error(`Pinata upload failed (${pinResponse.status}): ${errText}`)
+            }
 
-            const cid = result.split('\n').pop()
-
-            // Cleanup temp
-            execSync(`rm -rf "${tmpDir}"`)
+            const result = await pinResponse.json()
+            const cid = result.IpfsHash
 
             res.statusCode = 200
             res.setHeader('Content-Type', 'application/json')
@@ -79,7 +85,7 @@ export function ipfsUploadPlugin() {
               success: true,
               cid,
               ipfsUrl: `ipfs://${cid}`,
-              gatewayUrl: `https://ipfs.io/ipfs/${cid}`,
+              gatewayUrl: `https://gateway.pinata.cloud/ipfs/${cid}`,
               metadata,
             }))
           } catch (err) {

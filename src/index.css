@@ -4,46 +4,25 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
-  /* Brand colors */
-  --color-brand-50: #fef9e7;
-  --color-brand-100: #fdf0c8;
-  --color-brand-200: #fce28f;
-  --color-brand-300: #fad257;
-  --color-brand-400: #f8c425;
-  --color-brand-500: #f59e0b;
-  --color-brand-600: #d97706;
-  --color-brand-700: #b45309;
-  --color-brand-800: #92400e;
-  --color-brand-900: #78350f;
+  /* Mission Control — pure black + spectral white */
+  --color-background: #000000;
+  --color-surface: rgba(240, 240, 250, 0.03);
+  --color-surface-elevated: rgba(240, 240, 250, 0.06);
+  --color-surface-overlay: rgba(240, 240, 250, 0.09);
 
-  /* Primary (gold) */
-  --color-primary: #F59E0B;
-  --color-primary-light: #FBBF24;
-  --color-primary-dark: #D97706;
+  --color-foreground: #f0f0fa;
+  --color-foreground-secondary: rgba(240, 240, 250, 0.6);
+  --color-foreground-muted: rgba(240, 240, 250, 0.3);
 
-  /* Accent (purple) */
-  --color-accent: #8B5CF6;
-  --color-accent-light: #A78BFA;
-  --color-accent-dark: #7C3AED;
+  --color-muted: rgba(240, 240, 250, 0.05);
+  --color-border: rgba(240, 240, 250, 0.1);
+  --color-border-light: rgba(240, 240, 250, 0.2);
 
-  /* Surface */
-  --color-background: #0a0a0f;
-  --color-surface: #0F172A;
-  --color-surface-elevated: #1a1f35;
-  --color-surface-overlay: #1e2440;
-
-  /* Text */
-  --color-foreground: #F8FAFC;
-  --color-foreground-secondary: #94A3B8;
-  --color-foreground-muted: #64748B;
-
-  /* UI */
-  --color-muted: #272F42;
-  --color-border: #1e293b;
-  --color-border-light: #334155;
+  --color-primary: #f0f0fa;
+  --color-accent: #f0f0fa;
   --color-destructive: #EF4444;
   --color-success: #22C55E;
-  --color-ring: #F59E0B;
+  --color-ring: #f0f0fa;
 
   /* Fonts */
   --font-heading: 'Orbitron', sans-serif;
@@ -53,14 +32,13 @@
   --spacing-section: 6rem;
   --spacing-container: 2rem;
 
-  /* Animations - Emil's custom easings */
+  /* Easings */
   --ease-out-expo: cubic-bezier(0.19, 1, 0.22, 1);
   --ease-out-strong: cubic-bezier(0.23, 1, 0.32, 1);
   --ease-in-out-strong: cubic-bezier(0.77, 0, 0.175, 1);
 
-  /* Glow effects */
-  --glow-gold: 0 0 20px rgba(245, 158, 11, 0.3);
-  --glow-purple: 0 0 20px rgba(139, 92, 246, 0.3);
+  /* Spectral glow */
+  --glow-white: 0 0 20px rgba(240, 240, 250, 0.15);
 }
 
 @layer base {
@@ -90,7 +68,7 @@
   }
 
   ::selection {
-    background-color: rgba(245, 158, 11, 0.25);
+    background-color: rgba(240, 240, 250, 0.15);
     color: var(--color-foreground);
   }
 
@@ -113,16 +91,10 @@
 }
 
 @layer utilities {
-  /* Neon glow text */
   .text-glow {
-    text-shadow: 0 0 10px rgba(245, 158, 11, 0.5), 0 0 20px rgba(245, 158, 11, 0.25);
+    text-shadow: 0 0 10px rgba(240, 240, 250, 0.4), 0 0 20px rgba(240, 240, 250, 0.15);
   }
 
-  .text-glow-purple {
-    text-shadow: 0 0 10px rgba(139, 92, 246, 0.5), 0 0 20px rgba(139, 92, 246, 0.25);
-  }
-
-  /* Scanline overlay class */
   .scanlines::before {
     content: '';
     position: fixed;
@@ -138,34 +110,34 @@
     z-index: 9999;
   }
 
-  /* Neon glow box */
   .glow-border {
-    box-shadow: 0 0 1px rgba(245, 158, 11, 0.2), 0 0 8px rgba(245, 158, 11, 0.1);
+    box-shadow: 0 0 1px rgba(240, 240, 250, 0.15), 0 0 8px rgba(240, 240, 250, 0.05);
   }
 
-  .glow-border-purple {
-    box-shadow: 0 0 1px rgba(139, 92, 246, 0.2), 0 0 8px rgba(139, 92, 246, 0.1);
-  }
-
-  /* Glitch effect */
-  .glitch {
-    animation: glitch 3s infinite;
-  }
-
-  @keyframes glitch {
-    0%, 90%, 100% { transform: translate(0); }
-    92% { transform: translate(-2px, 1px); }
-    94% { transform: translate(2px, -1px); }
-    96% { transform: translate(-1px, 2px); }
-    98% { transform: translate(1px, -2px); }
-  }
-
-  /* Custom button press scale */
   .press-scale {
     transition: transform 160ms var(--ease-out-strong);
   }
 
   .press-scale:active {
     transform: scale(0.97);
+  }
+
+  .ghost-input {
+    background: rgba(240, 240, 250, 0.03);
+    border: 1px solid rgba(240, 240, 250, 0.1);
+    color: #f0f0fa;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.875rem;
+    transition: all 200ms;
+  }
+
+  .ghost-input:focus {
+    outline: none;
+    border-color: rgba(240, 240, 250, 0.3);
+    box-shadow: 0 0 12px rgba(240, 240, 250, 0.06);
+  }
+
+  .ghost-input::placeholder {
+    color: rgba(240, 240, 250, 0.2);
   }
 }

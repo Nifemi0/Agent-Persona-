@@ -39,7 +39,7 @@ export default function App() {
 
   // Verify flow
   const [verifyInput, setVerifyInput] = useState('')
-  const [verifyMode, setVerifyMode] = useState('name') // 'name' or 'id'
+  const [verifyMode, setVerifyMode] = useState('name')
   const [verifyResult, setVerifyResult] = useState(null)
   const [verifyLoading, setVerifyLoading] = useState(false)
   const [verifyError, setVerifyError] = useState(null)
@@ -75,7 +75,7 @@ export default function App() {
   }, [])
 
   const MANTLE_SEPOLIA = {
-    chainId: '0x138B', // 5003
+    chainId: '0x138B',
     chainName: NETWORK.NAME,
     rpcUrls: [NETWORK.RPC_URL],
     nativeCurrency: { name: 'MNT', symbol: 'MNT', decimals: 18 },
@@ -179,24 +179,30 @@ export default function App() {
     { id: MODE_VERIFY, label: 'Verify Agent' },
   ]
 
+  const ghostBorder = 'border border-white/[0.08]'
+  const ghostInput = 'w-full px-4 py-3 bg-[rgba(240,240,250,0.02)] border border-white/[0.08] text-[#f0f0fa] font-body text-sm placeholder:text-[#f0f0fa]/20 focus:outline-none focus:border-white/20 focus:shadow-[0_0_12px_rgba(240,240,250,0.04)] transition-all duration-200'
+  const ghostLabel = 'block text-[#f0f0fa]/60 font-body text-[10px] tracking-wider uppercase mb-2'
+  const ghostBtn = 'w-full py-3 border border-white/[0.12] text-[#f0f0fa] font-body text-xs tracking-wider uppercase press-scale transition-all duration-200 hover:bg-[rgba(240,240,250,0.03)] hover:border-white/[0.2] disabled:opacity-30 disabled:cursor-not-allowed active:scale-[0.97]'
+  const ghostPrimaryBtn = 'w-full py-3 bg-[#f0f0fa] text-[#000] font-body text-xs tracking-wider uppercase font-bold press-scale transition-all duration-200 hover:bg-white disabled:opacity-30 disabled:cursor-not-allowed active:scale-[0.97]'
+
   return (
-    <div className="min-h-screen bg-background scanlines">
-      <div className="max-w-lg mx-auto px-4 py-8">
+    <div className="min-h-screen bg-[#000] scanlines">
+      <div className="w-full max-w-lg mx-auto px-4 sm:px-6 py-6 sm:py-8">
         <Header />
 
         {/* Tab Nav */}
-        <div className="flex border-b border-border/60 mb-6">
+        <div className="flex border-b border-white/[0.08] mb-5 sm:mb-6">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => { setMode(tab.id); resetCreate() }}
-              className={`flex-1 pb-3 text-[11px] tracking-wider uppercase font-body font-bold transition-all duration-200 relative ${
-                mode === tab.id ? 'text-primary' : 'text-foreground-muted hover:text-foreground-secondary'
+              className={`flex-1 pb-3 text-[10px] sm:text-[11px] tracking-wider uppercase font-body font-bold transition-all duration-200 relative ${
+                mode === tab.id ? 'text-[#f0f0fa]' : 'text-[#f0f0fa]/30 hover:text-[#f0f0fa]/60'
               }`}
             >
               {tab.label}
               {mode === tab.id && (
-                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary shadow-[0_0_6px_rgba(245,158,11,0.3)]" />
+                <span className="absolute bottom-0 left-0 right-0 h-px bg-[#f0f0fa] shadow-[0_0_6px_rgba(240,240,250,0.2)]" />
               )}
             </button>
           ))}
@@ -209,9 +215,9 @@ export default function App() {
         {mode === MODE_CREATE && (
           <div className="space-y-5">
             {status === STATUS_IDLE && (
-              <div className="p-5 rounded-xl bg-surface/80 border border-border/50 backdrop-blur-sm space-y-4">
+              <div className={`p-4 sm:p-5 ${ghostBorder} space-y-4`}>
                 <div>
-                  <label className="block text-foreground-secondary text-[11px] tracking-wider uppercase mb-2 font-body">
+                  <label className={ghostLabel}>
                     Agent Name
                   </label>
                   <input
@@ -219,14 +225,14 @@ export default function App() {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="e.g. persona-alice-v1"
-                    className="w-full px-4 py-3 rounded-lg bg-surface border border-border/60 text-foreground font-body text-sm placeholder:text-foreground-muted/50 focus:outline-none focus:border-primary/50 focus:shadow-[0_0_8px_rgba(245,158,11,0.15)] transition-all duration-200"
+                    className={ghostInput}
                     autoFocus
                   />
                 </div>
 
                 {/* Social links */}
-                <div className="border-t border-border/30 pt-4">
-                  <p className="text-foreground-secondary text-[11px] tracking-wider uppercase mb-3 font-body">
+                <div className="border-t border-white/[0.06] pt-4">
+                  <p className={ghostLabel}>
                     Endpoints (optional)
                   </p>
                   <div className="space-y-3">
@@ -235,21 +241,21 @@ export default function App() {
                       value={website}
                       onChange={(e) => setWebsite(e.target.value)}
                       placeholder="Website URL"
-                      className="w-full px-4 py-3 rounded-lg bg-surface border border-border/60 text-foreground font-body text-sm placeholder:text-foreground-muted/50 focus:outline-none focus:border-primary/50 focus:shadow-[0_0_8px_rgba(245,158,11,0.15)] transition-all duration-200"
+                      className={ghostInput}
                     />
                     <input
                       type="text"
                       value={twitter}
                       onChange={(e) => setTwitter(e.target.value)}
                       placeholder="Twitter / X handle"
-                      className="w-full px-4 py-3 rounded-lg bg-surface border border-border/60 text-foreground font-body text-sm placeholder:text-foreground-muted/50 focus:outline-none focus:border-primary/50 focus:shadow-[0_0_8px_rgba(245,158,11,0.15)] transition-all duration-200"
+                      className={ghostInput}
                     />
                     <input
                       type="text"
                       value={github}
                       onChange={(e) => setGithub(e.target.value)}
                       placeholder="GitHub profile or repo"
-                      className="w-full px-4 py-3 rounded-lg bg-surface border border-border/60 text-foreground font-body text-sm placeholder:text-foreground-muted/50 focus:outline-none focus:border-primary/50 focus:shadow-[0_0_8px_rgba(245,158,11,0.15)] transition-all duration-200"
+                      className={ghostInput}
                     />
                   </div>
                 </div>
@@ -257,7 +263,7 @@ export default function App() {
                 <button
                   onClick={chainId !== NETWORK.CHAIN_ID && account ? handleSwitchNetwork : handleCreate}
                   disabled={!name.trim() || !account}
-                  className="w-full py-3 rounded-lg bg-accent text-white font-body text-sm font-bold press-scale transition-all duration-200 disabled:opacity-30 disabled:cursor-not-allowed hover:shadow-[0_0_16px_rgba(139,92,246,0.25)]"
+                  className={ghostPrimaryBtn}
                 >
                   {!account
                     ? 'Connect Wallet First'
@@ -270,9 +276,9 @@ export default function App() {
 
             {/* Progress */}
             {[STATUS_UPLOADING, STATUS_REGISTERING].includes(status) && (
-              <div className="p-8 rounded-xl bg-surface/80 border border-border/50 backdrop-blur-sm flex flex-col items-center gap-4">
-                <span className="inline-block w-8 h-8 border-2 border-accent/30 border-t-accent rounded-full animate-spin" />
-                <p className="text-foreground-secondary text-sm font-body">
+              <div className={`p-6 sm:p-8 ${ghostBorder} flex flex-col items-center gap-4`}>
+                <span className="inline-block w-6 h-6 sm:w-8 sm:h-8 border border-white/20 border-t-[#f0f0fa] rounded-full animate-spin" />
+                <p className="text-[#f0f0fa]/60 font-body text-xs sm:text-sm">
                   {STATUS_LABELS[status]}
                 </p>
               </div>
@@ -280,13 +286,13 @@ export default function App() {
 
             {/* Error */}
             {status === STATUS_ERROR && (
-              <div className="p-5 rounded-xl bg-surface/80 border border-destructive/40 backdrop-blur-sm space-y-4">
-                <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/30">
-                  <p className="text-destructive text-xs font-body break-all">{error}</p>
+              <div className={`p-4 sm:p-5 border border-red-500/30 space-y-4`}>
+                <div className="p-3 border border-red-500/20 bg-red-500/5">
+                  <p className="text-red-500 text-xs font-body break-all">{error}</p>
                 </div>
                 <button
                   onClick={resetCreate}
-                  className="w-full py-3 rounded-lg bg-primary text-background font-body text-sm font-bold press-scale transition-all duration-200 hover:shadow-[0_0_16px_rgba(245,158,11,0.25)]"
+                  className={ghostPrimaryBtn}
                 >
                   Try Again
                 </button>
@@ -295,75 +301,75 @@ export default function App() {
 
             {/* Success */}
             {status === STATUS_DONE && result && (
-              <div className="p-5 rounded-xl bg-surface/80 border border-success/40 backdrop-blur-sm space-y-5">
+              <div className={`p-4 sm:p-5 border border-green-500/30 space-y-5`}>
                 <div className="flex justify-center">
-                  <div className="w-16 h-16 rounded-full bg-success/20 border border-success/40 flex items-center justify-center">
-                    <svg className="w-8 h-8 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full border border-green-500/40 bg-green-500/10 flex items-center justify-center">
+                    <svg className="w-7 h-7 sm:w-8 sm:h-8 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                     </svg>
                   </div>
                 </div>
 
                 <div className="text-center">
-                  <h3 className="text-lg font-heading text-foreground tracking-wider text-glow">
+                  <h3 className="text-base sm:text-lg font-heading text-[#f0f0fa] tracking-wider text-glow">
                     Agent Registered
                   </h3>
-                  <p className="text-foreground-muted text-xs font-body mt-1">
+                  <p className="text-[#f0f0fa]/30 font-body text-[10px] sm:text-xs mt-1">
                     Agent ID #{result.agentId} — ERC-8004 aligned
                   </p>
                 </div>
 
-                <div className="p-4 rounded-lg bg-surface-elevated/50 border border-border/40 space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-foreground-secondary text-[11px] tracking-wider uppercase font-body">Agent ID</span>
-                    <span className="text-primary text-xs font-body font-bold">#{result.agentId}</span>
+                <div className={`p-4 ${ghostBorder} space-y-2 text-xs sm:text-sm`}>
+                  <div className="flex justify-between gap-2">
+                    <span className="text-[#f0f0fa]/60 font-body text-[10px] tracking-wider uppercase shrink-0">Agent ID</span>
+                    <span className="text-[#f0f0fa] font-body font-bold text-right">#{result.agentId}</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-foreground-secondary text-[11px] tracking-wider uppercase font-body">Name</span>
-                    <span className="text-foreground text-xs font-body">{result.metadata?.name}</span>
+                  <div className="flex justify-between gap-2">
+                    <span className="text-[#f0f0fa]/60 font-body text-[10px] tracking-wider uppercase shrink-0">Name</span>
+                    <span className="text-[#f0f0fa] font-body text-right break-all max-w-[60%]">{result.metadata?.name}</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-foreground-secondary text-[11px] tracking-wider uppercase font-body">Registry</span>
-                    <span className="text-foreground-muted text-[10px] font-body break-all max-w-[200px] text-right">{result.agentRegistry}</span>
+                  <div className="flex justify-between gap-2">
+                    <span className="text-[#f0f0fa]/60 font-body text-[10px] tracking-wider uppercase shrink-0">Registry</span>
+                    <span className="text-[#f0f0fa]/40 font-body text-[9px] break-all max-w-[60%] text-right">{result.agentRegistry}</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-foreground-secondary text-[11px] tracking-wider uppercase font-body">Owner</span>
-                    <span className="text-foreground-muted text-xs font-body">{formatAddress(result.address)}</span>
+                  <div className="flex justify-between gap-2">
+                    <span className="text-[#f0f0fa]/60 font-body text-[10px] tracking-wider uppercase shrink-0">Owner</span>
+                    <span className="text-[#f0f0fa]/40 font-body text-right">{formatAddress(result.address)}</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-foreground-secondary text-[11px] tracking-wider uppercase font-body">Tx Hash</span>
-                    <span className="text-foreground-muted text-xs font-body break-all max-w-[150px] text-right">{result.txHash.slice(0, 20)}...</span>
+                  <div className="flex justify-between gap-2">
+                    <span className="text-[#f0f0fa]/60 font-body text-[10px] tracking-wider uppercase shrink-0">Tx Hash</span>
+                    <span className="text-[#f0f0fa]/40 font-body break-all max-w-[60%] text-right">{result.txHash.slice(0, 20)}...</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-foreground-secondary text-[11px] tracking-wider uppercase font-body">Block</span>
-                    <span className="text-foreground-muted text-xs font-body">{result.blockNumber}</span>
+                  <div className="flex justify-between gap-2">
+                    <span className="text-[#f0f0fa]/60 font-body text-[10px] tracking-wider uppercase shrink-0">Block</span>
+                    <span className="text-[#f0f0fa]/40 font-body text-right">{result.blockNumber}</span>
                   </div>
                 </div>
 
-                {/* Reputation placeholder */}
-                <div className="p-3 rounded-lg bg-surface-elevated/50 border border-border/40">
-                  <p className="text-foreground-secondary text-[11px] tracking-wider uppercase mb-2 font-body text-center">
+                {/* Reputation */}
+                <div className={`p-3 ${ghostBorder}`}>
+                  <p className="text-[#f0f0fa]/60 font-body text-[10px] tracking-wider uppercase mb-2 text-center">
                     Reputation
                   </p>
-                  <div className="flex justify-center gap-6">
+                  <div className="flex justify-center gap-6 sm:gap-8">
                     <div className="text-center">
-                      <span className="block text-foreground text-sm font-heading font-bold">0</span>
-                      <span className="block text-foreground-muted text-[9px] tracking-wider uppercase font-body">Interactions</span>
+                      <span className="block text-[#f0f0fa] font-heading text-sm font-bold">0</span>
+                      <span className="block text-[#f0f0fa]/30 font-body text-[8px] tracking-wider uppercase">Interactions</span>
                     </div>
                     <div className="text-center">
-                      <span className="block text-foreground text-sm font-heading font-bold">0</span>
-                      <span className="block text-foreground-muted text-[9px] tracking-wider uppercase font-body">Attestations</span>
+                      <span className="block text-[#f0f0fa] font-heading text-sm font-bold">0</span>
+                      <span className="block text-[#f0f0fa]/30 font-body text-[8px] tracking-wider uppercase">Attestations</span>
                     </div>
                     <div className="text-center">
-                      <span className="block text-foreground text-sm font-heading font-bold">0</span>
-                      <span className="block text-foreground-muted text-[9px] tracking-wider uppercase font-body">Score</span>
+                      <span className="block text-[#f0f0fa] font-heading text-sm font-bold">0</span>
+                      <span className="block text-[#f0f0fa]/30 font-body text-[8px] tracking-wider uppercase">Score</span>
                     </div>
                   </div>
                 </div>
 
                 {/* ERC-8004 badge */}
-                <div className="p-3 rounded-lg bg-surface-elevated/50 border border-border/40 text-center">
-                  <p className="text-foreground-muted text-[10px] font-body tracking-wider uppercase">
+                <div className={`p-3 ${ghostBorder} text-center`}>
+                  <p className="text-[#f0f0fa]/30 font-body text-[9px] tracking-wider uppercase">
                     ERC-8004 • Persona Registered on Mantle Sepolia
                   </p>
                 </div>
@@ -372,14 +378,14 @@ export default function App() {
                   href={result.ipfsGatewayUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="block text-center text-primary/80 hover:text-primary text-[11px] tracking-wider uppercase font-body underline transition-colors duration-200"
+                  className="block text-center text-[#f0f0fa]/50 hover:text-[#f0f0fa] text-[10px] tracking-wider uppercase font-body underline transition-colors duration-200"
                 >
                   View Registration File on IPFS
                 </a>
 
                 <button
                   onClick={() => { resetCreate(); setName('') }}
-                  className="w-full py-3 rounded-lg bg-primary text-background font-body text-sm font-bold press-scale transition-all duration-200 hover:shadow-[0_0_16px_rgba(245,158,11,0.25)]"
+                  className={ghostPrimaryBtn}
                 >
                   Register Another Agent
                 </button>
@@ -390,25 +396,25 @@ export default function App() {
 
         {/* ====== VERIFY MODE ====== */}
         {mode === MODE_VERIFY && (
-          <div className="p-5 rounded-xl bg-surface/80 border border-border/50 backdrop-blur-sm space-y-4">
+          <div className={`p-4 sm:p-5 ${ghostBorder} space-y-4`}>
             {/* Verify mode toggle */}
-            <div className="flex gap-2 mb-1">
+            <div className="flex gap-2">
               <button
                 onClick={() => setVerifyMode('name')}
-                className={`px-3 py-1.5 text-[10px] tracking-wider uppercase font-body font-bold rounded-md transition-all ${
+                className={`px-3 py-1.5 text-[9px] tracking-wider uppercase font-body font-bold transition-all ${
                   verifyMode === 'name'
-                    ? 'bg-primary/20 text-primary border border-primary/40'
-                    : 'text-foreground-muted border border-border/30 hover:text-foreground-secondary'
+                    ? 'bg-[rgba(240,240,250,0.1)] text-[#f0f0fa] border border-white/20'
+                    : 'text-[#f0f0fa]/30 border border-white/[0.06] hover:text-[#f0f0fa]/60'
                 }`}
               >
                 By Name
               </button>
               <button
                 onClick={() => setVerifyMode('id')}
-                className={`px-3 py-1.5 text-[10px] tracking-wider uppercase font-body font-bold rounded-md transition-all ${
+                className={`px-3 py-1.5 text-[9px] tracking-wider uppercase font-body font-bold transition-all ${
                   verifyMode === 'id'
-                    ? 'bg-primary/20 text-primary border border-primary/40'
-                    : 'text-foreground-muted border border-border/30 hover:text-foreground-secondary'
+                    ? 'bg-[rgba(240,240,250,0.1)] text-[#f0f0fa] border border-white/20'
+                    : 'text-[#f0f0fa]/30 border border-white/[0.06] hover:text-[#f0f0fa]/60'
                 }`}
               >
                 By Agent ID
@@ -416,7 +422,7 @@ export default function App() {
             </div>
 
             <div>
-              <label className="block text-foreground-secondary text-[11px] tracking-wider uppercase mb-2 font-body">
+              <label className={ghostLabel}>
                 {verifyMode === 'name' ? 'Agent Name' : 'Agent ID (number)'}
               </label>
               <div className="flex gap-2">
@@ -425,97 +431,97 @@ export default function App() {
                   value={verifyInput}
                   onChange={(e) => setVerifyInput(e.target.value)}
                   placeholder={verifyMode === 'name' ? 'e.g. persona-alice-v1' : 'e.g. 1'}
-                  className="flex-1 px-4 py-3 rounded-lg bg-surface border border-border/60 text-foreground font-body text-sm placeholder:text-foreground-muted/50 focus:outline-none focus:border-primary/50 focus:shadow-[0_0_8px_rgba(245,158,11,0.15)] transition-all duration-200"
+                  className={`flex-1 ${ghostInput}`}
                 />
                 <button
                   onClick={handleVerify}
                   disabled={verifyLoading || !verifyInput.trim()}
-                  className="px-5 py-3 rounded-lg bg-primary text-background font-body text-sm font-bold press-scale transition-all duration-200 disabled:opacity-30 disabled:cursor-not-allowed hover:shadow-[0_0_12px_rgba(245,158,11,0.2)]"
+                  className="px-4 sm:px-5 py-3 bg-[#f0f0fa] text-[#000] font-body text-xs tracking-wider uppercase font-bold press-scale transition-all duration-200 disabled:opacity-30 disabled:cursor-not-allowed active:scale-[0.97] shrink-0"
                 >
                   {verifyLoading ? (
-                    <span className="inline-block w-4 h-4 border-2 border-background/30 border-t-background rounded-full animate-spin" />
+                    <span className="inline-block w-4 h-4 border border-black/20 border-t-black rounded-full animate-spin" />
                   ) : 'Verify'}
                 </button>
               </div>
             </div>
 
             {verifyError && (
-              <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/30">
-                <p className="text-destructive text-xs font-body">{verifyError}</p>
+              <div className="p-3 border border-red-500/30 bg-red-500/5">
+                <p className="text-red-500 text-xs font-body">{verifyError}</p>
               </div>
             )}
 
             {verifyResult && !verifyResult.exists && (
-              <div className="p-4 rounded-lg bg-surface-elevated/50 border border-border/40 text-center py-6">
-                <p className="text-foreground-muted text-sm font-body">
+              <div className={`p-4 ${ghostBorder} text-center py-6`}>
+                <p className="text-[#f0f0fa]/30 font-body text-xs sm:text-sm">
                   No agent found
                 </p>
               </div>
             )}
 
             {verifyResult && verifyResult.exists && (
-              <div className="p-4 rounded-lg bg-surface-elevated/50 border border-border/40 space-y-3">
-                <p className="text-foreground-secondary text-[11px] tracking-wider uppercase font-body">Agent Data</p>
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-foreground-secondary text-[11px] tracking-wider uppercase font-body">Agent ID</span>
-                    <span className="text-primary text-xs font-body font-bold">#{verifyResult.agentId}</span>
+              <div className={`p-4 ${ghostBorder} space-y-3`}>
+                <p className="text-[#f0f0fa]/60 font-body text-[10px] tracking-wider uppercase">Agent Data</p>
+                <div className="space-y-2 text-xs sm:text-sm">
+                  <div className="flex justify-between gap-2">
+                    <span className="text-[#f0f0fa]/60 font-body text-[10px] tracking-wider uppercase shrink-0">Agent ID</span>
+                    <span className="text-[#f0f0fa] font-body font-bold text-right">#{verifyResult.agentId}</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-foreground-secondary text-[11px] tracking-wider uppercase font-body">Owner</span>
-                    <span className="text-foreground-muted text-xs font-body">{formatAddress(verifyResult.owner)}</span>
+                  <div className="flex justify-between gap-2">
+                    <span className="text-[#f0f0fa]/60 font-body text-[10px] tracking-wider uppercase shrink-0">Owner</span>
+                    <span className="text-[#f0f0fa]/40 font-body text-right">{formatAddress(verifyResult.owner)}</span>
                   </div>
                   {verifyResult.metadata?.name && (
-                    <div className="flex justify-between">
-                      <span className="text-foreground-secondary text-[11px] tracking-wider uppercase font-body">Name</span>
-                      <span className="text-foreground text-xs font-body">{verifyResult.metadata.name}</span>
+                    <div className="flex justify-between gap-2">
+                      <span className="text-[#f0f0fa]/60 font-body text-[10px] tracking-wider uppercase shrink-0">Name</span>
+                      <span className="text-[#f0f0fa] font-body text-right break-all max-w-[60%]">{verifyResult.metadata.name}</span>
                     </div>
                   )}
                   {verifyResult.wallet && verifyResult.wallet !== '0x0000000000000000000000000000000000000000' && (
-                    <div className="flex justify-between">
-                      <span className="text-foreground-secondary text-[11px] tracking-wider uppercase font-body">Payment Wallet</span>
-                      <span className="text-foreground-muted text-xs font-body">{formatAddress(verifyResult.wallet)}</span>
+                    <div className="flex justify-between gap-2">
+                      <span className="text-[#f0f0fa]/60 font-body text-[10px] tracking-wider uppercase shrink-0">Payment Wallet</span>
+                      <span className="text-[#f0f0fa]/40 font-body text-right">{formatAddress(verifyResult.wallet)}</span>
                     </div>
                   )}
-                  <div className="flex justify-between">
-                    <span className="text-foreground-secondary text-[11px] tracking-wider uppercase font-body">Standard</span>
-                    <span className="text-accent text-[10px] font-body">ERC-8004</span>
+                  <div className="flex justify-between gap-2">
+                    <span className="text-[#f0f0fa]/60 font-body text-[10px] tracking-wider uppercase shrink-0">Standard</span>
+                    <span className="text-[#f0f0fa] text-[9px] font-body text-right">ERC-8004</span>
                   </div>
                 </div>
 
-                  {/* Reputation placeholder */}
-                  <div className="pt-2 border-t border-border/40">
-                    <p className="text-foreground-secondary text-[10px] tracking-wider uppercase mb-2 font-body text-center">
-                      Reputation
-                    </p>
-                    <div className="flex justify-center gap-5">
-                      <div className="text-center">
-                        <span className="block text-foreground text-sm font-heading font-bold">0</span>
-                        <span className="block text-foreground-muted text-[8px] tracking-wider uppercase font-body">Interactions</span>
-                      </div>
-                      <div className="text-center">
-                        <span className="block text-foreground text-sm font-heading font-bold">0</span>
-                        <span className="block text-foreground-muted text-[8px] tracking-wider uppercase font-body">Attestations</span>
-                      </div>
-                      <div className="text-center">
-                        <span className="block text-foreground text-sm font-heading font-bold">0</span>
-                        <span className="block text-foreground-muted text-[8px] tracking-wider uppercase font-body">Score</span>
-                      </div>
+                {/* Reputation */}
+                <div className="pt-2 border-t border-white/[0.06]">
+                  <p className="text-[#f0f0fa]/60 font-body text-[9px] tracking-wider uppercase mb-2 text-center">
+                    Reputation
+                  </p>
+                  <div className="flex justify-center gap-5">
+                    <div className="text-center">
+                      <span className="block text-[#f0f0fa] font-heading text-xs font-bold">0</span>
+                      <span className="block text-[#f0f0fa]/30 font-body text-[7px] tracking-wider uppercase">Interactions</span>
+                    </div>
+                    <div className="text-center">
+                      <span className="block text-[#f0f0fa] font-heading text-xs font-bold">0</span>
+                      <span className="block text-[#f0f0fa]/30 font-body text-[7px] tracking-wider uppercase">Attestations</span>
+                    </div>
+                    <div className="text-center">
+                      <span className="block text-[#f0f0fa] font-heading text-xs font-bold">0</span>
+                      <span className="block text-[#f0f0fa]/30 font-body text-[7px] tracking-wider uppercase">Score</span>
                     </div>
                   </div>
+                </div>
 
-                  {verifyResult.agentURI && (
-                    <a
-                      href={verifyResult.agentURI.startsWith('ipfs://')
-                        ? `https://gateway.pinata.cloud/ipfs/${verifyResult.agentURI.replace('ipfs://', '')}`
-                        : verifyResult.agentURI}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="block text-center text-primary/80 hover:text-primary text-[10px] tracking-wider uppercase font-body underline transition-colors duration-200"
-                    >
-                      View Registration File on IPFS
-                    </a>
-                  )}
+                {verifyResult.agentURI && (
+                  <a
+                    href={verifyResult.agentURI.startsWith('ipfs://')
+                      ? `https://gateway.pinata.cloud/ipfs/${verifyResult.agentURI.replace('ipfs://', '')}`
+                      : verifyResult.agentURI}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block text-center text-[#f0f0fa]/50 hover:text-[#f0f0fa] text-[9px] tracking-wider uppercase font-body underline transition-colors duration-200"
+                  >
+                    View Registration File on IPFS
+                  </a>
+                )}
               </div>
             )}
           </div>

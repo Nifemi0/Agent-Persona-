@@ -1,0 +1,26 @@
+[0:00-0:05] Intro
+For every AI agent, identity is not optional. It is foundational.
+
+[0:05-0:12 - Title]
+Introducing the Agent Identity Registry. ERC-8004 aligned agent identity on Mantle.
+
+[0:12-0:22 - Problem]
+AI agents are everywhere. But without identity, they are ephemeral, indistinguishable, and untrustable. 15 million agents projected by 2027. 38 billion dollars lost to AI-related fraud annually.
+
+[0:22-0:30 - What is Identity]
+Every agent needs a verifiable on-chain identity. Owner. Wallet. Agent ID. Signed metadata. All on chain.
+
+[0:30-0:42 - Solution]
+One-click registration. Sign to prove wallet ownership. Upload metadata to IPFS. Mint an ERC-8004 identity token on Mantle. Verify independently. One signature. One transaction.
+
+[0:42-0:55 - Architecture]
+The architecture is clean. Wallet connects. Frontend uploads signed metadata to IPFS. The Identity Registry mints a soulbound ERC-721 token. All on Mantle Sepolia.
+
+[0:55-1:05 - Trust Model]
+Cryptographic trust. No server, no gatekeeper. Agent A asks who are you. Agent B proves ownership through signature recovery. Any agent verifies any other agent independently.
+
+[1:05-1:15 - ERC-8004]
+Aligned with the ERC-8004 standard. Identity Registry with URI storage. Incremental agent IDs. Metadata and wallet management. All on chain.
+
+[1:15-1:20 - Closing]
+Contract on Mantle Sepolia. Agent Identity Registry. Identity infrastructure for autonomous agents.

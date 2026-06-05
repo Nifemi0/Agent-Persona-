@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Agent Identity Registry — Demo</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+html, body { background:#000; overflow:hidden; width:100%; height:100%; }
+video {
+  position:fixed; top:0; left:0; width:100%; height:100%;
+  object-fit:contain; background:#000;
+}
+/* Progress line */
+#timeline {
+  position:fixed; bottom:0; left:0; right:0; height:1px; z-index:10;
+  background:rgba(255,255,255,0.03);
+}
+#timeline .bar {
+  height:100%; width:0%;
+  background:linear-gradient(90deg, #F59E0B, #22d3ee);
+  transition:width 0.1s linear;
+}
+</style>
+</head>
+<body>
+
+<div id="timeline"><div class="bar" id="progressBar"></div></div>
+
+<video id="demoVideo" playsinline muted>
+  <source src="demo-final.mp4" type="video/mp4">
+</video>
+
+<script>
+const video = document.getElementById('demoVideo');
+const bar = document.getElementById('progressBar');
+
+// Autoplay on any interaction (browser policy)
+document.addEventListener('click', () => {
+  video.muted = false;
+  video.play().catch(() => {});
+  if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
+    document.documentElement.requestFullscreen().catch(() => {});
+  }
+});
+
+// Update progress
+video.addEventListener('timeupdate', () => {
+  bar.style.width = `${(video.currentTime / video.duration) * 100}%`;
+});
+
+// Unknown gesture to start
+video.addEventListener('loadedmetadata', () => {
+  // Attempt autoplay muted (works on most browsers)
+  video.play().catch(() => {});
+});
+
+// Shift+Space to toggle
+document.addEventListener('keydown', (e) => {
+  if (e.shiftKey && e.code === 'Space') {
+    e.preventDefault();
+    if (video.paused) video.play(); else video.pause();
+  }
+});
+</script>
+</body>
+</html>

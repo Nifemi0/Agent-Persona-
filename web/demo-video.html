@@ -4,40 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Agent Identity Registry — Demo</title>
-<script src="p5.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.11.3/p5.min.js"></script>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 html, body { background:#000; overflow:hidden; width:100%; height:100%; }
 canvas { display:block; }
 
-/* HUD overlay */
-#hud {
-  position:fixed; bottom:20px; left:50%; transform:translateX(-50%);
-  display:flex; align-items:center; gap:10px;
-  font-family:'Courier New',monospace; font-size:11px;
-  color:rgba(255,255,255,0.15); letter-spacing:1px;
-  z-index:10; pointer-events:none;
-}
-#hud .dot { width:6px; height:6px; border-radius:50%; background:rgba(245,158,11,0.3); }
-#hud .dot.active { background:#F59E0B; box-shadow:0 0 8px rgba(245,158,11,0.5); }
-#hud .dot.done { background:rgba(52,211,153,0.5); }
-
-#controls {
-  position:fixed; bottom:60px; left:50%; transform:translateX(-50%);
-  display:flex; gap:12px; z-index:10;
-}
-#controls button {
-  padding:8px 20px; border:1px solid rgba(245,158,11,0.3);
-  background:rgba(0,0,0,0.7); color:#f0f0fa;
-  font-family:'Courier New',monospace; font-size:11px;
-  letter-spacing:1px; cursor:pointer; transition:all 0.3s;
-  border-radius:4px;
-}
-#controls button:hover { border-color:#F59E0B; background:rgba(245,158,11,0.1); }
-#controls button:disabled { opacity:0.2; cursor:default; }
+/* Progress line */
 #timeline {
-  position:fixed; bottom:0; left:0; right:0; height:2px; z-index:10;
-  background:rgba(255,255,255,0.05);
+  position:fixed; bottom:0; left:0; right:0; height:1px; z-index:10;
+  background:rgba(255,255,255,0.03);
 }
 #timeline .bar {
   height:100%; width:0%;
@@ -49,24 +25,15 @@ canvas { display:block; }
 <body>
 
 <div id="timeline"><div class="bar" id="progressBar"></div></div>
-
-<div id="hud">
-  <span style="color:rgba(255,255,255,0.3);font-size:9px">SCENE</span>
-  <span id="sceneLabel">1 / 8</span>
-  <span style="color:rgba(255,255,255,0.1)">|</span>
-  <span id="timeLabel">0:00</span>
-</div>
-
-<div id="controls">
-  <button id="playBtn">▶ PLAY</button>
-  <button id="restartBtn">⟳ RESTART</button>
-</div>
+<!-- No visible controls — Shift+Space toggle, tap for fullscreen -->
 
 <script>
 // ============================================================
 // CONFIG
 // ============================================================
-const TOTAL_DURATION = 115; // seconds
+const TOTAL_DURATION = 118; // seconds (at 1x speed)
+const TIME_SCALE = 1.6;      // playback speed
+const DELAY = 5;           // seconds before autoplay
 const SCENES = [
   { id:'title',       start:0,   end:12,   label:'Title' },
   { id:'problem',     start:12,  end:28,   label:'The Problem' },
@@ -75,13 +42,14 @@ const SCENES = [
   { id:'architecture',start:60,  end:76,   label:'Architecture' },
   { id:'trust',       start:76,  end:92,   label:'Trust Model' },
   { id:'erccomply',   start:92,  end:104,  label:'ERC-8004' },
-  { id:'closing',     start:104, end:115,  label:'Closing' },
+  { id:'closing',     start:99, end:118,  label:'Closing' },
 ];
 
 // ============================================================
 // P5 SKETCH
 // ============================================================
 const sketch = (p) => {
+  let stars = [];
   let particles = [];
   let elapsed = 0;
   let playing = true;
@@ -94,8 +62,8 @@ const sketch = (p) => {
     gold:    '#F59E0B',
     cyan:    '#22d3ee',
     emerald: '#34d399',
-    white:   '#f0f0fa',
-    dim:     '#94a3b8',
+    white:   '#f8f8ff',
+    dim:     '#b8c4d8',
     accent:  '#8B5CF6',
   };
 
@@ -114,6 +82,19 @@ const sketch = (p) => {
     // Start the clock immediately
     startTime = Date.now();
 
+    // Init stars
+    for (let i = 0; i < 300; i++) {
+      stars.push({
+        x: p.random(p.width), y: p.random(p.height),
+        size: p.random(0.5, 2.5),
+        alpha: p.random(0.2, 0.8),
+        speed: p.random(0.04, 0.15),
+        drift: p.random(-0.05, 0.05),
+        twinkleSpeed: p.random(1, 4),
+        twinklePhase: p.random(Math.PI * 2),
+      });
+    }
+
     // Init particles
     for (let i = 0; i < 80; i++) {
       particles.push({
@@ -130,7 +111,8 @@ const sketch = (p) => {
     // Update elapsed — use Date.now() for reliability
     if (playing) {
       const now = Date.now();
-      elapsed = pausedElapsed + (now - startTime) / 1000;
+      const raw = (now - startTime) / 1000 - DELAY;
+      elapsed = pausedElapsed + Math.max(0, raw) * TIME_SCALE;
       if (elapsed >= TOTAL_DURATION) {
         elapsed = TOTAL_DURATION;
         playing = false;
@@ -145,20 +127,12 @@ const sketch = (p) => {
     const scene = SCENES[currentScene];
     const t = Math.min(1, Math.max(0, (elapsed - scene.start) / (scene.end - scene.start)));
 
-    // Update UI
-    document.getElementById('timeLabel').textContent =
-      `${Math.floor(elapsed / 60)}:${String(Math.floor(elapsed % 60)).padStart(2, '0')}`;
+    // Progress bar only
     document.getElementById('progressBar').style.width = `${(elapsed / TOTAL_DURATION) * 100}%`;
-    document.getElementById('sceneLabel').textContent = `${currentScene + 1} / ${SCENES.length}`;
-
-    // Update HUD dots
-    document.querySelectorAll('#hud .dot').forEach((dot, i) => {
-      dot.classList.toggle('active', i === currentScene);
-      dot.classList.toggle('done', elapsed > SCENES[i].end);
-    });
 
     // Draw
     p.background(0);
+    drawStarfield();
     drawParticles(particles, currentScene);
 
     // Draw scene
@@ -181,11 +155,11 @@ const sketch = (p) => {
   // SCENE: TITLE
   // ============================================================
   function drawTitle(t) {
-    const fadeIn = p.constrain(t * 3, 0, 1);
-    const fadeOut = 1 - p.constrain((t - 0.7) * 4, 0, 1);
+    const fadeIn = p.constrain(t * 1.5, 0, 1);
+    const fadeOut = 1 - p.constrain((t - 0.7) * 2, 0, 1);
 
     p.push();
-    p.translate(p.width / 2, p.height / 2 - 40);
+    p.translate(p.width / 2, p.height / 2);
     p.scale(0.8 + 0.2 * fadeIn);
 
     // Title
@@ -247,7 +221,7 @@ const sketch = (p) => {
     // Anonymity icons
     const showIcons = t > 0.1;
     if (showIcons) {
-      const iconT = p.constrain((t - 0.1) / 0.6, 0, 1);
+      const iconT = p.constrain((t - 0.1) / 0.78, 0, 1);
       for (let i = 0; i < 8; i++) {
         const x = 300 + i * 175;
         const y = 500 + p.sin(elapsed * 0.5 + i * 1.7) * 20;
@@ -267,7 +241,7 @@ const sketch = (p) => {
     // Text lines
     p.textAlign(p.CENTER, p.CENTER);
     for (let i = 0; i < lines.length; i++) {
-      const lineT = p.constrain((t - lines[i].delay) / 0.25, 0, 1);
+      const lineT = p.constrain((t - lines[i].delay) / 0.33, 0, 1);
       const alpha = 255 * easeOutCubic(lineT);
       const yOff = (1 - easeOutCubic(lineT)) * 20;
       p.fill(240, 240, 250, alpha);
@@ -278,7 +252,7 @@ const sketch = (p) => {
 
     // Stat
     if (t > 0.6) {
-      const statT = p.constrain((t - 0.6) / 0.3, 0, 1);
+      const statT = p.constrain((t - 0.6) / 0.39, 0, 1);
       p.textAlign(p.CENTER, p.CENTER);
       p.fill(245, 158, 11, 200 * statT);
       p.textSize(36);
@@ -330,7 +304,7 @@ const sketch = (p) => {
 
     // Agent label
     if (emergeT > 0.6) {
-      const labelT = p.constrain((t - 0.3) / 0.3, 0, 1);
+      const labelT = p.constrain((t - 0.3) / 0.39, 0, 1);
       p.fill(rgba(C.gold, 200 * labelT));
       p.textAlign(p.CENTER, p.CENTER);
       p.textSize(13);
@@ -345,11 +319,11 @@ const sketch = (p) => {
       ];
 
       props.forEach((prop, i) => {
-        const propT = p.constrain((t - 0.35 - i * 0.08) / 0.2, 0, 1);
+        const propT = p.constrain((t - 0.35 - i * 0.08) / 0.26, 0, 1);
         const px = ax + p.cos(prop.angle) * prop.dist * propT;
         const py = ay + p.sin(prop.angle) * prop.dist * propT;
 
-        p.fill(rgba(C.dim, 150 * propT));
+        p.fill(rgba(C.dim, 200 * propT));
         p.textSize(11);
         p.textStyle(p.NORMAL);
         p.textAlign(p.RIGHT, p.CENTER);
@@ -363,7 +337,7 @@ const sketch = (p) => {
 
     // Bottom text
     if (t > 0.5) {
-      const botT = p.constrain((t - 0.5) / 0.3, 0, 1);
+      const botT = p.constrain((t - 0.5) / 0.39, 0, 1);
       p.textAlign(p.CENTER, p.CENTER);
       p.fill(rgba(C.white, 200 * botT));
       p.textSize(20);
@@ -379,19 +353,36 @@ const sketch = (p) => {
   // SCENE: SOLUTION (One-Click Registration)
   // ============================================================
   function drawSolution(t) {
+    const cx = p.width / 2;
+    const cy = p.height / 2 - 20;
+
+    // Background diamond
+    if (t > 0.1) {
+      const dR = 300 + 15 * Math.sin(elapsed * 0.2);
+      p.noFill();
+      p.stroke(rgba(C.gold, 8));
+      p.strokeWeight(0.3);
+      p.beginShape();
+      p.vertex(cx, cy - dR);
+      p.vertex(cx + dR, cy);
+      p.vertex(cx, cy + dR);
+      p.vertex(cx - dR, cy);
+      p.endShape(p.CLOSE);
+    }
+
     const steps = [
-      { label:'1. Sign',  sub:'Prove wallet ownership', x:300,   icon:'✍' },
-      { label:'2. Upload',sub:'Metadata to IPFS',        x:700,   icon:'☁' },
-      { label:'3. Mint',  sub:'ERC-8004 token on Mantle',x:1100,  icon:'◆' },
-      { label:'4. Verify',sub:'Independent verification', x:1500,  icon:'✓' },
+      { label:'1. Sign',  sub:'Prove wallet ownership',     x:360,  icon:'✍' },
+      { label:'2. Upload',sub:'Metadata to IPFS',          x:640,  icon:'☁' },
+      { label:'3. Mint',  sub:'ERC-8004 token on Mantle',   x:920,  icon:'◆' },
+      { label:'4. Verify',sub:'Independent verification',   x:1200, icon:'✓' },
     ];
 
     // Arrows between steps
     for (let i = 0; i < steps.length - 1; i++) {
-      const arrowT = p.constrain((t - 0.15 - i * 0.15) / 0.2, 0, 1);
-      const x1 = steps[i].x + 80;
-      const x2 = steps[i + 1].x - 80;
-      const y = 320;
+      const arrowT = p.constrain((t - 0.15 - i * 0.15) / 0.26, 0, 1);
+      const x1 = steps[i].x + 55;
+      const x2 = steps[i + 1].x - 55;
+      const y = 280;
       const progress = x1 + (x2 - x1) * arrowT;
 
       p.stroke(rgba(C.gold, 100 * arrowT));
@@ -408,46 +399,46 @@ const sketch = (p) => {
 
     // Steps
     steps.forEach((step, i) => {
-      const stepT = p.constrain((t - i * 0.15) / 0.25, 0, 1);
+      const stepT = p.constrain((t - i * 0.15) / 0.33, 0, 1);
 
       if (stepT > 0) {
         // Circle
         p.fill(rgba(C.gold, 30 * stepT));
         p.stroke(rgba(C.gold, 80 * stepT));
         p.strokeWeight(1);
-        p.circle(step.x, 320, 60);
+        p.circle(step.x, 280, 50);
 
         // Icon
         p.fill(rgba(C.gold, 200 * stepT));
         p.noStroke();
         p.textAlign(p.CENTER, p.CENTER);
-        p.textSize(20);
-        p.text(step.icon, step.x, 324);
+        p.textSize(18);
+        p.text(step.icon, step.x, 283);
 
         // Label
         p.fill(rgba(C.white, 220 * stepT));
-        p.textSize(16);
+        p.textSize(14);
         p.textStyle(p.BOLD);
-        p.text(step.label, step.x, 400);
+        p.text(step.label, step.x, 350);
 
         // Sub
         p.fill(rgba(C.dim, 150 * stepT));
-        p.textSize(12);
+        p.textSize(11);
         p.textStyle(p.NORMAL);
-        p.text(step.sub, step.x, 425);
+        p.text(step.sub, step.x, 372);
       }
     });
 
     // Bottom CTA
     if (t > 0.5) {
-      const ctaT = p.constrain((t - 0.5) / 0.3, 0, 1);
+      const ctaT = p.constrain((t - 0.5) / 0.39, 0, 1);
       p.textAlign(p.CENTER, p.CENTER);
-      p.fill(rgba(C.white, 150 * ctaT));
+      p.fill(rgba(C.white, 220 * ctaT));
       p.textSize(16);
-      p.text('One signature. One transaction.', p.width / 2, 550);
+      p.text('One signature. One transaction.', p.width / 2, 480);
       p.fill(rgba(C.emerald, 200 * ctaT));
       p.textSize(12);
-      p.text('~128K gas • 3-5 seconds', p.width / 2, 580);
+      p.text('~128K gas • 3-5 seconds', p.width / 2, 505);
     }
   }
 
@@ -455,6 +446,23 @@ const sketch = (p) => {
   // SCENE: ARCHITECTURE
   // ============================================================
   function drawArchitecture(t) {
+    const cx = p.width / 2;
+    const cy = p.height / 2;
+
+    // Background diamond
+    if (t > 0.1) {
+      const dR = 280 + 15 * Math.sin(elapsed * 0.2);
+      p.noFill();
+      p.stroke(rgba(C.gold, 8));
+      p.strokeWeight(0.3);
+      p.beginShape();
+      p.vertex(cx, cy - dR);
+      p.vertex(cx + dR, cy);
+      p.vertex(cx, cy + dR);
+      p.vertex(cx - dR, cy);
+      p.endShape(p.CLOSE);
+    }
+
     const comps = [
       { label:'Wallet',    sub:'MetaMask',   x:250, y:300, w:160, h:60,  col:C.cyan },
       { label:'Frontend',  sub:'React + Vite',x:500, y:300, w:160, h:60,  col:C.cyan },
@@ -464,7 +472,7 @@ const sketch = (p) => {
     ];
 
     // Mantle boundary box
-    const boundT = p.constrain((t - 0.5) / 0.4, 0, 1);
+    const boundT = p.constrain((t - 0.5) / 0.52, 0, 1);
     if (boundT > 0) {
       p.noFill();
       p.stroke(rgba(C.gold, 60 * boundT));
@@ -480,7 +488,7 @@ const sketch = (p) => {
 
     // Draw components
     comps.forEach((comp, i) => {
-      const compT = p.constrain((t - i * 0.1) / 0.3, 0, 1);
+      const compT = p.constrain((t - i * 0.1) / 0.39, 0, 1);
       if (compT > 0) {
         const col = Array.isArray(comp.col) ? comp.col[0] : comp.col;
         p.fill(rgba(col, 40 * compT));
@@ -496,14 +504,14 @@ const sketch = (p) => {
         p.text(comp.label, comp.x + comp.w / 2, comp.y + comp.h / 2 - 8);
         p.textSize(10);
         p.textStyle(p.NORMAL);
-        p.fill(rgba(C.dim, 150 * compT));
+        p.fill(rgba(C.dim, 200 * compT));
         p.text(comp.sub, comp.x + comp.w / 2, comp.y + comp.h / 2 + 14);
       }
     });
 
     // Connection arrows
     for (let i = 0; i < comps.length - 1; i++) {
-      const connT = p.constrain((t - 0.2 - i * 0.1) / 0.2, 0, 1);
+      const connT = p.constrain((t - 0.2 - i * 0.1) / 0.26, 0, 1);
       if (connT > 0) {
         const x1 = comps[i].x + comps[i].w;
         const x2 = comps[i + 1].x;
@@ -521,13 +529,13 @@ const sketch = (p) => {
 
     // Title
     if (t > 0.1) {
-      const titleT = p.constrain((t - 0.1) / 0.2, 0, 1);
+      const titleT = p.constrain((t - 0.1) / 0.26, 0, 1);
       p.fill(rgba(C.white, 200 * titleT));
       p.textAlign(p.CENTER, p.CENTER);
       p.textSize(22);
       p.textStyle(p.BOLD);
       p.text('Architecture', p.width / 2, 120);
-      p.fill(rgba(C.dim, 100 * titleT));
+      p.fill(rgba(C.dim, 160 * titleT));
       p.textSize(13);
       p.textStyle(p.NORMAL);
       p.text('One-click registration flow', p.width / 2, 155);
@@ -538,6 +546,23 @@ const sketch = (p) => {
   // SCENE: TRUST MODEL
   // ============================================================
   function drawTrust(t) {
+    const cx = p.width / 2;
+    const cy = p.height / 2 - 40;
+
+    // Background diamond
+    if (t > 0.1) {
+      const dR = 260 + 15 * Math.sin(elapsed * 0.2);
+      p.noFill();
+      p.stroke(rgba(C.gold, 8));
+      p.strokeWeight(0.3);
+      p.beginShape();
+      p.vertex(cx, cy - dR);
+      p.vertex(cx + dR, cy);
+      p.vertex(cx, cy + dR);
+      p.vertex(cx - dR, cy);
+      p.endShape(p.CLOSE);
+    }
+
     // Two agents
     const a1x = p.width / 2 - 300;
     const a2x = p.width / 2 + 300;
@@ -616,7 +641,7 @@ const sketch = (p) => {
       p.textSize(18);
       p.textStyle(p.BOLD);
       p.text('Cryptographic trust — no server, no gatekeeper', p.width / 2, 680);
-      p.fill(rgba(C.dim, 100 * resT));
+      p.fill(rgba(C.dim, 160 * resT));
       p.textSize(13);
       p.textStyle(p.NORMAL);
       p.text('Any agent independently verifies any other agent', p.width / 2, 715);
@@ -624,147 +649,344 @@ const sketch = (p) => {
   }
 
   // ============================================================
-  // SCENE: ERC-8004 ALIGNMENT
+  // SCENE: ERC-8004 — Protocol Stack Visualization
   // ============================================================
   function drawERC(t) {
-    // Badge
-    const badgeT = p.constrain(t / 0.3, 0, 1);
-    p.push();
-    p.translate(p.width / 2, 140);
-    p.scale(badgeT);
-    p.fill(rgba(C.gold, 30));
-    p.stroke(rgba(C.gold, 80));
-    p.strokeWeight(1.5);
-    p.rect(-120, -25, 240, 50, 25);
-    p.fill(rgba(C.gold, 200));
-    p.noStroke();
-    p.textAlign(p.CENTER, p.CENTER);
-    p.textSize(16);
-    p.textStyle(p.BOLD);
-    p.text('ERC-8004  IDENTITY REGISTRY', 0, 2);
-    p.pop();
+    const cx = p.width / 2;
+    const cy = p.height / 2 - 30;
 
-    // Title
-    if (t > 0.15) {
-      const titleT = p.constrain((t - 0.15) / 0.2, 0, 1);
-      p.fill(rgba(C.white, 180 * titleT));
+    // ── Stage 1: Badge fades in (0 - 0.2) ──
+    const badgeT = easeOutCubic(p.constrain(t / 0.2, 0, 1));
+    if (badgeT > 0) {
+      p.push();
+      p.translate(cx, 120);
+      p.scale(0.7 + 0.3 * badgeT);
+
+      p.drawingContext.shadowColor = 'rgba(245,158,11,0.4)';
+      p.drawingContext.shadowBlur = 30 * badgeT;
+
+      p.noFill();
+      p.stroke(rgba(C.gold, 150 * badgeT));
+      p.strokeWeight(1.5);
+      p.rect(-110, -22, 220, 44, 22);
+
+      p.fill(rgba(C.gold, 220 * badgeT));
+      p.noStroke();
       p.textAlign(p.CENTER, p.CENTER);
       p.textSize(15);
-      p.textStyle(p.NORMAL);
-      p.text('Aligned with the ERC-8004 Trustless Agents standard', p.width / 2, 230);
+      p.textStyle(p.BOLD);
+      p.text('ERC-8004', 0, -1);
+
+      p.drawingContext.shadowBlur = 0;
+      p.pop();
     }
 
-    // Checklist
-    const checks = [
-      { text:'ERC-721 with URIStorage',                 ok:true,  delay:0.2 },
-      { text:'Incremental agentId (tokenId)',           ok:true,  delay:0.26 },
-      { text:'register(string) returns agentId',         ok:true,  delay:0.32 },
-      { text:'setAgentURI() with URIUpdated event',      ok:true,  delay:0.38 },
-      { text:'getMetadata / setMetadata',                ok:true,  delay:0.44 },
-      { text:'agentWallet — reserved key, EIP-712',     ok:true,  delay:0.50 },
-      { text:'ERC-8004 registration file JSON schema',   ok:true,  delay:0.56 },
-      { text:'Soulbound (non-transferable) identity',   ok:true,  delay:0.62 },
-    ];
+    // ── Stage 2: Vertical beam (0.15 - 0.4) ──
+    const beamT = easeOutCubic(p.constrain((t - 0.15) / 0.25, 0, 1));
+    if (beamT > 0) {
+      const beamH = 280 * beamT;
+      // Vertical glow line
+      p.drawingContext.shadowColor = 'rgba(245,158,11,0.15)';
+      p.drawingContext.shadowBlur = 20;
+      p.stroke(rgba(C.gold, 40 * beamT));
+      p.strokeWeight(1.5);
+      p.line(cx, cy - beamH / 2, cx, cy + beamH / 2);
+      p.drawingContext.shadowBlur = 0;
 
-    checks.forEach((check, i) => {
-      const checkT = p.constrain((t - check.delay) / 0.12, 0, 1);
-      if (checkT > 0) {
-        const x = p.width / 2 - 250;
-        const y = 290 + i * 38;
-
-        // Checkmark
-        p.fill(rgba(C.emerald, 180 * checkT));
+      // Data particles flowing up the beam
+      for (let i = 0; i < 6; i++) {
+        const py = cy - beamH / 2 + ((elapsed * 60 + i * 45) % beamH);
+        const px = cx + (Math.random() - 0.5) * 6;
+        p.fill(rgba(C.cyan, 60 * beamT));
         p.noStroke();
-        p.textAlign(p.RIGHT, p.CENTER);
-        p.textSize(16);
-        p.text('✓', x - 15, y);
-
-        // Text
-        p.fill(rgba(C.white, 180 * checkT));
-        p.textAlign(p.LEFT, p.CENTER);
-        p.textSize(14);
-        p.textStyle(p.NORMAL);
-        p.text(check.text, x, y);
+        p.circle(px, py, 2);
       }
-    });
+    }
 
-    // Future note
-    if (t > 0.7) {
-      const noteT = p.constrain((t - 0.7) / 0.3, 0, 1);
-      p.fill(rgba(C.dim, 100 * noteT));
+    // ── Stage 3: Protocol stack layers (0.25 - 0.6) ──
+    const stackT = easeOutCubic(p.constrain((t - 0.25) / 0.35, 0, 1));
+    if (stackT > 0) {
+      const layers = [
+        { label: 'IDENTITY REGISTRY',   sub: 'On-chain agent IDs · ERC-721 URIStorage', active: true,  yOff: -90 },
+        { label: 'REPUTATION REGISTRY', sub: 'Trust scores · attestations · history',    active: false, yOff: 0 },
+        { label: 'VALIDATION REGISTRY', sub: 'Verification proofs · authorization',      active: false, yOff: 90 },
+      ];
+
+      layers.forEach((layer, i) => {
+        const layerT = easeOutCubic(p.constrain((stackT - i * 0.08) / 0.6, 0, 1));
+        if (layerT > 0) {
+          const ly = cy + layer.yOff;
+          const paneW = 320 + 40 * (1 - layerT);
+          const paneH = 50;
+
+          // Pane background
+          const alpha = layer.active ? 60 * layerT : 15 * layerT;
+          p.fill(rgba(C.white, alpha));
+          p.noStroke();
+          p.rect(cx - paneW / 2, ly - paneH / 2, paneW, paneH, 6);
+
+          // Left accent bar
+          const barColor = layer.active ? C.gold : C.dim;
+          p.fill(rgba(barColor, (layer.active ? 200 : 60) * layerT));
+          p.noStroke();
+          p.rect(cx - paneW / 2, ly - paneH / 2 + 4, 3, paneH - 8, 1.5);
+
+          // Label
+          p.fill(rgba(C.white, (layer.active ? 220 : 100) * layerT));
+          p.textAlign(p.LEFT, p.CENTER);
+          p.textSize(14);
+          p.textStyle(layer.active ? p.BOLD : p.NORMAL);
+          p.text(layer.label, cx - paneW / 2 + 16, ly - 6);
+
+          // Subtitle
+          p.fill(rgba(C.dim, (layer.active ? 120 : 60) * layerT));
+          p.textSize(10);
+          p.textStyle(p.NORMAL);
+          p.text(layer.sub, cx - paneW / 2 + 16, ly + 14);
+
+          // Active indicator
+          if (layer.active && layerT > 0.5) {
+            const glowT = p.constrain((layerT - 0.5) / 0.3, 0, 1);
+            p.fill(rgba(C.emerald, 180 * glowT));
+            p.textAlign(p.RIGHT, p.CENTER);
+            p.textSize(9);
+            p.textStyle(p.BOLD);
+            p.text('✓ ALIGNED', cx + paneW / 2 - 14, ly);
+          }
+        }
+      });
+    }
+
+    // ── Stage 4: Connecting lines between layers (0.4 - 0.6) ──
+    const connT = easeOutCubic(p.constrain((t - 0.4) / 0.2, 0, 1));
+    if (connT > 0) {
+      p.stroke(rgba(C.cyan, 25 * connT));
+      p.strokeWeight(0.8);
+      p.drawingContext.setLineDash([2, 4]);
+      p.line(cx, cy - 90 + 25, cx, cy - 25);
+      p.line(cx, cy + 25, cx, cy + 90 - 25);
+      p.drawingContext.setLineDash([]);
+    }
+
+    // ── Stage 5: Bottom summary (0.6 - 0.8) ──
+    const sumT = easeOutCubic(p.constrain((t - 0.6) / 0.2, 0, 1));
+    if (sumT > 0) {
+      p.fill(rgba(C.dim, 100 * sumT));
       p.textAlign(p.CENTER, p.CENTER);
-      p.textSize(12);
-      p.text('Reputation & Validation registries — future scope', p.width / 2, 650);
+      p.textSize(11);
+      p.text('Identity Registry aligned · Reputation & Validation — future scope', cx, cy + 170);
+    }
+
+    // ── Shimmer effect on aligned layer ──
+    if (t > 0.3) {
+      const shimmer = 0.5 + 0.5 * Math.sin(elapsed * 2);
+      p.fill(rgba(C.gold, 6 * shimmer));
+      p.noStroke();
+      const shY = cy - 90;
+      p.rect(cx - 160, shY - 25, 320, 50, 6);
     }
   }
 
   // ============================================================
-  // SCENE: CLOSING
+  // SCENE: CLOSING — Particle Convergence + Diamond Shield
   // ============================================================
   function drawClosing(t) {
-    const fadeIn = p.constrain(t * 2, 0, 1);
+    const cx = p.width / 2;
+    const cy = p.height / 2;
 
-    // Large title
-    p.push();
-    p.translate(p.width / 2, p.height / 2 - 60);
-    p.scale(0.9 + 0.1 * fadeIn);
+    // ── Stage 1: Particles converge to diamond perimeter (0 - 0.3) ──
+    const convergeT = easeOutCubic(p.constrain(t / 0.3, 0, 1));
+    const diamondR = 140;
+    particles.forEach((part, i) => {
+      const angle = (i / particles.length) * Math.PI * 2;
+      // Diamond shape: |x| + |y| = R, then rotate 45°
+      const denom = Math.max(0.01, Math.abs(Math.cos(angle)) + Math.abs(Math.sin(angle)));
+      let tx = diamondR * Math.cos(angle) / denom;
+      let ty = diamondR * Math.sin(angle) / denom;
+      // Rotate 45° for upright diamond
+      const rot = Math.PI / 4;
+      const rx = tx * Math.cos(rot) - ty * Math.sin(rot);
+      const ry = tx * Math.sin(rot) + ty * Math.cos(rot);
+      part.tx = cx + rx;
+      part.ty = cy + ry;
+      // Spring toward target
+      part.x += (part.tx - part.x) * convergeT * 0.08;
+      part.y += (part.ty - part.y) * convergeT * 0.08;
+      part.vx *= 0.92;
+      part.vy *= 0.92;
+    });
 
-    p.fill(rgba(C.white, 255 * fadeIn));
-    p.textAlign(p.CENTER, p.CENTER);
-    p.textSize(56);
-    p.textStyle(p.BOLD);
-    p.text('Agent Identity Registry', 0, -20);
+    // ── Stage 2: Diamond emerges (0.15 - 0.5) ──
+    const emergeT = easeOutCubic(p.constrain((t - 0.15) / 0.35, 0, 1));
+    if (emergeT > 0) {
+      const diaSize = emergeT * diamondR;
+      // Outer glow
+      p.drawingContext.shadowColor = 'rgba(245,158,11,0.2)';
+      p.drawingContext.shadowBlur = 60 * emergeT;
+      // Diamond shape
+      p.noFill();
+      p.stroke(rgba(C.gold, 200 * emergeT));
+      p.strokeWeight(2.5 * emergeT);
+      p.beginShape();
+      p.vertex(cx, cy - diaSize);
+      p.vertex(cx + diaSize, cy);
+      p.vertex(cx, cy + diaSize);
+      p.vertex(cx - diaSize, cy);
+      p.endShape(p.CLOSE);
+      p.drawingContext.shadowBlur = 0;
 
-    p.fill(rgba(C.gold, 200 * fadeIn));
-    p.textSize(18);
-    p.textStyle(p.NORMAL);
-    p.text('ERC-8004 aligned agent identity on Mantle', 0, 35);
+      // Inner glow fill
+      p.fill(rgba(C.gold, 8 * emergeT));
+      p.noStroke();
+      p.beginShape();
+      p.vertex(cx, cy - diaSize);
+      p.vertex(cx + diaSize, cy);
+      p.vertex(cx, cy + diaSize);
+      p.vertex(cx - diaSize, cy);
+      p.endShape(p.CLOSE);
 
-    // Gold line
-    p.noFill();
-    p.stroke(rgba(C.gold, 100 * fadeIn));
-    p.strokeWeight(1.5);
-    const lw = 200 * fadeIn;
-    p.line(-lw / 2, 55, lw / 2, 55);
+      // Second diamond (thin ring)
+      p.noFill();
+      p.stroke(rgba(C.cyan, 60 * emergeT));
+      p.strokeWeight(1);
+      const innerSize = diaSize * 0.85;
+      p.beginShape();
+      p.vertex(cx, cy - innerSize);
+      p.vertex(cx + innerSize, cy);
+      p.vertex(cx, cy + innerSize);
+      p.vertex(cx - innerSize, cy);
+      p.endShape(p.CLOSE);
+    }
 
-    p.pop();
+    // ── Stage 3: Title burns in from center (0.35 - 0.55) ──
+    const titleT = easeOutCubic(p.constrain((t - 0.35) / 0.2, 0, 1));
+    if (titleT > 0) {
+      p.push();
+      p.translate(cx, cy);
+      p.scale(0.5 + 0.5 * titleT);
 
-    // Details
-    if (t > 0.15) {
-      const detT = p.constrain((t - 0.15) / 0.3, 0, 1);
-      const details = [
-        'Contract: 0xCd2A74Cff974B2B962A5AA46D3aBe3F7b137509D',
-        'Network: Mantle Sepolia • Chain ID: 5003',
-        'Standard: ERC-8004 (Draft)',
-        'Demo: found-toxic-caribbean-trim.trycloudflare.com',
-      ];
-      details.forEach((d, i) => {
-        p.fill(rgba(C.dim, 150 * detT));
+      // Title glow
+      p.drawingContext.shadowColor = 'rgba(245,158,11,0.6)';
+      p.drawingContext.shadowBlur = 40 * titleT;
+
+      p.fill(rgba(C.white, 255 * titleT));
+      p.textAlign(p.CENTER, p.CENTER);
+      p.textSize(48);
+      p.textStyle(p.BOLD);
+      p.text('Agent Identity', 0, -8);
+      p.textSize(36);
+      p.fill(rgba(C.gold, 220 * titleT));
+      p.text('Registry', 0, 42);
+
+      p.drawingContext.shadowBlur = 0;
+      p.pop();
+    }
+
+    // ── Stage 4: Orbiting ring with contract (0.5 - 0.7) ──
+    const ringT = easeOutCubic(p.constrain((t - 0.5) / 0.2, 0, 1));
+    if (ringT > 0) {
+      p.push();
+      p.translate(cx, cy);
+      p.rotate(elapsed * 0.3);
+
+      // Orbital ring
+      p.noFill();
+      p.stroke(rgba(C.cyan, 40 * ringT));
+      p.strokeWeight(1);
+      p.ellipse(0, 0, diamondR * 2.8, diamondR * 2.8);
+
+      // Small dots on orbital path
+      for (let i = 0; i < 12; i++) {
+        const a = (i / 12) * Math.PI * 2;
+        const ox = Math.cos(a) * diamondR * 1.4;
+        const oy = Math.sin(a) * diamondR * 1.4;
+        p.fill(rgba(C.gold, (80 + 60 * Math.sin(a * 3 + elapsed))) * ringT);
+        p.noStroke();
+        p.circle(ox, oy, 3);
+      }
+
+      p.pop();
+
+      // Contract address below diamond
+      const addrT = easeOutCubic(p.constrain((t - 0.55) / 0.15, 0, 1));
+      if (addrT > 0) {
+        p.fill(rgba(C.dim, 200 * addrT));
         p.textAlign(p.CENTER, p.CENTER);
-        p.textSize(13);
-        p.text(d, p.width / 2, p.height / 2 + 40 + i * 30);
+        p.textSize(11);
+        p.text('0xCd2A74...b137509D', cx, cy + diamondR * 1.4 + 30);
+      }
+    }
+
+    // ── Stage 5: Details fade in (0.6 - 0.8) ──
+    const detT = easeOutCubic(p.constrain((t - 0.6) / 0.2, 0, 1));
+    if (detT > 0) {
+      const dets = [
+        'Mantle Sepolia • Chain 5003',
+        'ERC-8004 Identity Infrastructure',
+        'found-toxic-caribbean-trim.trycloudflare.com',
+      ];
+      dets.forEach((d, i) => {
+        p.fill(rgba(C.dim, (100 + i * 30) * detT));
+        p.textAlign(p.CENTER, p.CENTER);
+        p.textSize(12);
+        p.text(d, cx, p.height - 140 + i * 22);
       });
     }
 
-    // Footer
-    if (t > 0.4) {
-      const footT = p.constrain((t - 0.4) / 0.3, 0, 1);
-      p.fill(rgba(C.dim, 80 * footT));
-      p.textAlign(p.CENTER, p.CENTER);
-      p.textSize(12);
-      p.text('Built for the Mantle Turing Test Hackathon 2026', p.width / 2, p.height - 100);
-      p.fill(rgba(C.dim, 50 * footT));
-      p.textSize(11);
-      p.text('Agentic Wallets & Economy Track', p.width / 2, p.height - 75);
-      p.fill(rgba(C.dim, 30 * footT));
-      p.textSize(10);
-      p.text('Built solo in 8 days', p.width / 2, p.height - 50);
+    // ── Stage 6: Final pulse (0.85 - 1.0) ──
+    const pulseT = p.constrain((t - 0.85) / 0.15, 0, 1);
+    if (pulseT > 0) {
+      const pulseSize = 1 + pulseT * 1.5;
+      p.push();
+      p.translate(cx, cy);
+      p.scale(pulseSize);
+      p.noFill();
+      p.stroke(rgba(C.gold, (100 - 100 * pulseT)));
+      p.strokeWeight(2 - 2 * pulseT);
+      p.beginShape();
+      p.vertex(0, -diamondR);
+      p.vertex(diamondR, 0);
+      p.vertex(0, diamondR);
+      p.vertex(-diamondR, 0);
+      p.endShape(p.CLOSE);
+      p.pop();
     }
 
-    // Particles speed up at end
-    particles.forEach(part => {
-      part.vx *= 1.01;
-      part.vy *= 1.01;
+    // ── Celebratory particles ──
+    if (t > 0.7) {
+      const sparkT = p.constrain((t - 0.7) / 0.3, 0, 1);
+      if (Math.random() < 0.3 * sparkT) {
+        const angle = Math.random() * Math.PI * 2;
+        const dist = 80 + Math.random() * 200;
+        const sx = cx + Math.cos(angle) * dist;
+        const sy = cy + Math.sin(angle) * dist;
+        p.fill(rgba(C.gold, 150 * sparkT * Math.random()));
+        p.noStroke();
+        p.circle(sx, sy, 2 + Math.random() * 3);
+      }
+    }
+  }
+
+  // ============================================================
+  // STARFIELD
+  // ============================================================
+  function drawStarfield() {
+    stars.forEach(s => {
+      // Slow downward drift
+      s.y += s.speed;
+      s.x += s.drift;
+
+      // Wrap around
+      if (s.y > p.height + 2) { s.y = -2; s.x = p.random(p.width); }
+      if (s.x < -2) s.x = p.width + 2;
+      if (s.x > p.width + 2) s.x = -2;
+
+      // Twinkle
+      const twinkle = 0.6 + 0.4 * Math.sin(elapsed * s.twinkleSpeed + s.twinklePhase);
+
+      p.fill(240, 240, 250, s.alpha * 200 * twinkle);
+      p.noStroke();
+      p.circle(s.x, s.y, s.size);
     });
   }
 
@@ -788,7 +1010,7 @@ const sketch = (p) => {
       part.vx = Math.min(1, Math.max(-1, part.vx));
       part.vy = Math.min(1, Math.max(-1, part.vy));
 
-      p.fill(148, 163, 184, part.alpha * 255);
+      p.fill(200, 210, 230, part.alpha * 255);
       p.noStroke();
       p.circle(part.x, part.y, part.size);
     });
@@ -867,26 +1089,24 @@ const sketch = (p) => {
 // ============================================================
 const myp5 = new p5(sketch, document.body);
 
-// Controls
-document.getElementById('playBtn').addEventListener('click', () => {
-  if (myp5.playing) {
-    myp5.pause();
-    document.getElementById('playBtn').textContent = '▶ PLAY';
-  } else {
-    myp5.play();
-    document.getElementById('playBtn').textContent = '■ PAUSE';
+// ============================================================
+// KEYBOARD & FULLSCREEN
+// ============================================================
+
+// Shift+Space to toggle play/pause
+document.addEventListener('keydown', (e) => {
+  if (e.shiftKey && e.code === 'Space') {
+    e.preventDefault();
+    if (myp5.playing) { myp5.pause(); } else { myp5.play(); }
   }
 });
 
-document.getElementById('restartBtn').addEventListener('click', () => {
-  myp5.restart();
-  document.getElementById('playBtn').textContent = '▶ PLAY';
+// Tap anywhere for fullscreen
+document.addEventListener('click', () => {
+  if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
+    document.documentElement.requestFullscreen().catch(() => {});
+  }
 });
-
-// HUD dots
-let hudDots = '';
-SCENES.forEach(() => { hudDots += '<span class="dot"></span>'; });
-document.querySelector('#hud').insertAdjacentHTML('beforeend', hudDots);
 </script>
 </body>
 </html>

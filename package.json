@@ -5,6 +5,10 @@
   "workspaces": [
     "offchain/cli"
   ],
+  "scripts": {
+    "build": "cd web && npm install && npm run build",
+    "dev": "cd web && npm run dev"
+  },
   "dependencies": {
     "ethers": "^6.16.0",
     "nft.storage": "^6.2.0",

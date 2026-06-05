@@ -2,8 +2,10 @@ import { useState, useEffect, useCallback } from 'react'
 import { connectWallet, formatAddress, createPersona, verifyByAgentId, verifyByName, getAgentRegistry } from './lib/registry'
 import Header from './components/Header'
 import WalletInfo from './components/WalletInfo'
+import Landing from './components/Landing'
 import { NETWORK } from './lib/contract-addresses'
 
+const MODE_LANDING = 'landing'
 const MODE_CREATE = 'create'
 const MODE_VERIFY = 'verify'
 
@@ -19,7 +21,7 @@ const STATUS_LABELS = {
 }
 
 export default function App() {
-  const [mode, setMode] = useState(MODE_CREATE)
+  const [mode, setMode] = useState(MODE_LANDING)
   const [account, setAccount] = useState(null)
   const [chainId, setChainId] = useState(null)
   const [connecting, setConnecting] = useState(false)
@@ -167,6 +169,11 @@ export default function App() {
     }
   }
 
+  // Show landing page first
+  if (mode === MODE_LANDING) {
+    return <Landing onEnter={() => setMode(MODE_CREATE)} />
+  }
+
   const tabs = [
     { id: MODE_CREATE, label: 'Register Agent' },
     { id: MODE_VERIFY, label: 'Verify Agent' },
@@ -302,7 +309,7 @@ export default function App() {
                     Agent Registered
                   </h3>
                   <p className="text-foreground-muted text-xs font-body mt-1">
-                    Agent ID #{result.agentId} — ERC-8004 compliant
+                    Agent ID #{result.agentId} — ERC-8004 aligned
                   </p>
                 </div>
 
@@ -498,26 +505,21 @@ export default function App() {
                   </div>
 
                   {verifyResult.agentURI && (
-                  <div className="pt-2 border-t border-border/40">
-                    <p className="text-foreground-muted text-[10px] font-body tracking-wider text-center">
-                      Agent URI: {verifyResult.agentURI.substring(0, 40)}...
-                    </p>
-                  </div>
-                )}
+                    <a
+                      href={verifyResult.agentURI.startsWith('ipfs://')
+                        ? `https://gateway.pinata.cloud/ipfs/${verifyResult.agentURI.replace('ipfs://', '')}`
+                        : verifyResult.agentURI}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block text-center text-primary/80 hover:text-primary text-[10px] tracking-wider uppercase font-body underline transition-colors duration-200"
+                    >
+                      View Registration File on IPFS
+                    </a>
+                  )}
               </div>
             )}
           </div>
         )}
-
-        {/* Footer */}
-        <footer className="mt-10 text-center">
-          <p className="text-foreground-muted text-[10px] font-body tracking-wider">
-            Powered by Mantle Sepolia • IPFS • ERC-8004
-          </p>
-          <p className="text-foreground-muted/50 text-[9px] font-body mt-1">
-            Agent Identity Registry v1.0 — Hackathon Demo
-          </p>
-        </footer>
       </div>
     </div>
   )

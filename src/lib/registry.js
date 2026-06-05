@@ -87,7 +87,7 @@ export async function createPersona(name, website, twitter, github) {
   // 3. Register on chain using ERC-8004 register(string agentURI)
   const agentURI = `ipfs://${upload.cid}`
   const contract = getRegistryContract(signer)
-  const tx = await contract.register(agentURI)
+  const tx = await contract["register(string)"](agentURI)
   const receipt = await tx.wait()
 
   // 4. Parse the Registered event to get agentId

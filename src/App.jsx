@@ -5,7 +5,7 @@ import Header from './components/Header'
 import WalletInfo from './components/WalletInfo'
 import Landing from './components/Landing'
 import StepIndicator from './components/StepIndicator'
-import { NETWORK } from './lib/contract-addresses'
+import { NETWORK, switchToMantle, getReadOnlyProvider } from './lib/contract-addresses'
 
 const MODE_LANDING = 'landing'
 const MODE_CREATE = 'create'
@@ -57,6 +57,8 @@ export default function App() {
     try {
       const addr = await connectWallet()
       setAccount(addr)
+      // Auto-switch to Mantle Sepolia with Alchemy RPC
+      await switchToMantle()
       const provider = new ethers.BrowserProvider(window.ethereum)
       const net = await provider.getNetwork()
       setChainId(Number(net.chainId))

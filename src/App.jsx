@@ -40,6 +40,7 @@ export default function App() {
   // Agent wallet assignment
   const [showWalletAssign, setShowWalletAssign] = useState(false)
   const [agentWalletAddr, setAgentWalletAddr] = useState('')
+  const [agentWalletKey, setAgentWalletKey] = useState('')
   const [walletAssignLoading, setWalletAssignLoading] = useState(false)
   const [walletAssignError, setWalletAssignError] = useState(null)
   const [walletAssignSuccess, setWalletAssignSuccess] = useState(null)
@@ -201,12 +202,12 @@ export default function App() {
 
   // ===== Assign Agent Wallet =====
   async function handleAssignWallet() {
-    if (!agentWalletAddr.trim() || !result) return
+    if (!agentWalletAddr.trim() || !agentWalletKey.trim() || !result) return
     setWalletAssignLoading(true)
     setWalletAssignError(null)
     setWalletAssignSuccess(null)
     try {
-      const res = await assignAgentWallet(result.agentId, agentWalletAddr.trim())
+      const res = await assignAgentWallet(result.agentId, agentWalletAddr.trim(), agentWalletKey.trim())
       setWalletAssignSuccess(res)
       setShowWalletAssign(false)
     } catch (err) {
@@ -557,14 +558,36 @@ export default function App() {
 
                   {showWalletAssign && (
                     <div className="space-y-3">
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={agentWalletAddr}
+                          onChange={(e) => setAgentWalletAddr(e.target.value)}
+                          placeholder="0x... (agent wallet address)"
+                          className={`flex-1 ${ghostInput}`}
+                          autoFocus
+                        />
+                        <button
+                          onClick={() => {
+                            const wallet = ethers.Wallet.createRandom()
+                            setAgentWalletAddr(wallet.address)
+                            setAgentWalletKey(wallet.privateKey)
+                          }}
+                          className="shrink-0 px-3 py-3 rounded border border-white/[0.12] text-[#f0f0fa] font-body text-[9px] tracking-wider uppercase press-scale transition-all duration-200 hover:bg-[rgba(240,240,250,0.03)]"
+                        >
+                          Generate
+                        </button>
+                      </div>
                       <input
-                        type="text"
-                        value={agentWalletAddr}
-                        onChange={(e) => setAgentWalletAddr(e.target.value)}
-                        placeholder="0x... (agent wallet address)"
+                        type="password"
+                        value={agentWalletKey}
+                        onChange={(e) => setAgentWalletKey(e.target.value)}
+                        placeholder="0x... (agent private key)"
                         className={ghostInput}
-                        autoFocus
                       />
+                      <p className="text-[#f0f0fa]/20 text-[8px] font-body tracking-wider">
+                        The agent wallet signs its consent. MetaMask submits the tx.
+                      </p>
                       {walletAssignError && (
                         <div className="p-3 border border-red-500/30 bg-red-500/5">
                           <p className="text-red-500 text-[10px] font-body break-all">{walletAssignError}</p>
@@ -580,7 +603,7 @@ export default function App() {
                         </button>
                         <button
                           onClick={handleAssignWallet}
-                          disabled={!agentWalletAddr.trim() || walletAssignLoading}
+                          disabled={!agentWalletAddr.trim() || !agentWalletKey.trim() || walletAssignLoading}
                           className="flex-[2] py-3 rounded border border-white/[0.2] text-[#f0f0fa] font-body text-[10px] tracking-wider uppercase font-bold press-scale transition-all duration-200 hover:bg-[rgba(240,240,250,0.05)] active:scale-[0.97] disabled:opacity-30 disabled:cursor-not-allowed"
                         >
                           {walletAssignLoading ? (

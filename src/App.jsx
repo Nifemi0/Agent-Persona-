@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { ethers } from 'ethers'
-import { connectWallet, formatAddress, signPersonaName, uploadMetadata, registerOnChain, verifyByAgentId, verifyByName, getAgentRegistry } from './lib/registry'
+import { connectWallet, formatAddress, signPersonaName, uploadMetadata, registerOnChain, assignAgentWallet, verifyByAgentId, verifyByName, getAgentRegistry } from './lib/registry'
 import Header from './components/Header'
 import WalletInfo from './components/WalletInfo'
 import Landing from './components/Landing'
@@ -35,6 +35,13 @@ export default function App() {
   const [loadingLabel, setLoadingLabel] = useState('')
   const [error, setError] = useState(null)
   const [result, setResult] = useState(null)
+
+  // Agent wallet assignment
+  const [showWalletAssign, setShowWalletAssign] = useState(false)
+  const [agentWalletAddr, setAgentWalletAddr] = useState('')
+  const [walletAssignLoading, setWalletAssignLoading] = useState(false)
+  const [walletAssignError, setWalletAssignError] = useState(null)
+  const [walletAssignSuccess, setWalletAssignSuccess] = useState(null)
 
   // Verify flow
   const [verifyInput, setVerifyInput] = useState('')
@@ -187,6 +194,23 @@ export default function App() {
     } finally {
       setLoading(false)
       setLoadingLabel('')
+    }
+  }
+
+  // ===== Assign Agent Wallet =====
+  async function handleAssignWallet() {
+    if (!agentWalletAddr.trim() || !result) return
+    setWalletAssignLoading(true)
+    setWalletAssignError(null)
+    setWalletAssignSuccess(null)
+    try {
+      const res = await assignAgentWallet(result.agentId, agentWalletAddr.trim())
+      setWalletAssignSuccess(res)
+      setShowWalletAssign(false)
+    } catch (err) {
+      setWalletAssignError(err.reason || err.message || 'Failed to assign wallet')
+    } finally {
+      setWalletAssignLoading(false)
     }
   }
 
@@ -490,6 +514,75 @@ export default function App() {
                 <button onClick={resetFlow} className={ghostPrimaryBtn}>
                   Register Another Agent
                 </button>
+
+                {/* === Agent Wallet Assignment === */}
+                <div className={`p-4 ${ghostBorder}`}>
+                  <p className="text-[#f0f0fa]/60 text-[10px] tracking-wider uppercase mb-3 font-body text-center">
+                    Agent Wallet
+                  </p>
+                  <p className="text-[#f0f0fa]/30 text-[10px] font-body mb-3 text-center leading-relaxed">
+                    Assign a wallet keypair to this agent so it can cryptographically prove its identity to other agents.
+                  </p>
+
+                  {!showWalletAssign && !walletAssignSuccess && (
+                    <button
+                      onClick={() => setShowWalletAssign(true)}
+                      className={`w-full ${ghostOutlineBtn}`}
+                    >
+                      Assign Agent Wallet
+                    </button>
+                  )}
+
+                  {showWalletAssign && (
+                    <div className="space-y-3">
+                      <input
+                        type="text"
+                        value={agentWalletAddr}
+                        onChange={(e) => setAgentWalletAddr(e.target.value)}
+                        placeholder="0x... (agent wallet address)"
+                        className={ghostInput}
+                        autoFocus
+                      />
+                      {walletAssignError && (
+                        <div className="p-3 border border-red-500/30 bg-red-500/5">
+                          <p className="text-red-500 text-[10px] font-body break-all">{walletAssignError}</p>
+                        </div>
+                      )}
+                      <div className="flex gap-3">
+                        <button
+                          onClick={() => { setShowWalletAssign(false); setWalletAssignError(null) }}
+                          disabled={walletAssignLoading}
+                          className="flex-1 py-3 rounded border border-white/[0.12] text-[#f0f0fa] font-body text-[10px] tracking-wider uppercase press-scale transition-all duration-200 hover:bg-[rgba(240,240,250,0.03)] active:scale-[0.97] disabled:opacity-30"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={handleAssignWallet}
+                          disabled={!agentWalletAddr.trim() || walletAssignLoading}
+                          className="flex-[2] py-3 rounded border border-white/[0.2] text-[#f0f0fa] font-body text-[10px] tracking-wider uppercase font-bold press-scale transition-all duration-200 hover:bg-[rgba(240,240,250,0.05)] active:scale-[0.97] disabled:opacity-30 disabled:cursor-not-allowed"
+                        >
+                          {walletAssignLoading ? (
+                            <span className="inline-flex items-center gap-2">
+                              <span className="inline-block w-3 h-3 border border-white/20 border-t-[#f0f0fa] rounded-full animate-spin" />
+                              Signing &amp; Submitting...
+                            </span>
+                          ) : 'Confirm'}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {walletAssignSuccess && (
+                    <div className="text-center space-y-2">
+                      <p className="text-green-500 text-[10px] font-body">
+                        ✓ Agent wallet assigned
+                      </p>
+                      <p className="text-[#f0f0fa]/30 text-[9px] font-body break-all">
+                        Tx: {walletAssignSuccess.txHash.slice(0, 30)}...
+                      </p>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>

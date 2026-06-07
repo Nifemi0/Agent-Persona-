@@ -52,6 +52,58 @@ export function getAgentRegistry() {
 }
 
 /**
+ * Assign an agent wallet address to an existing agent.
+ * Signs EIP-712 typed data with MetaMask, then calls setAgentWallet on chain.
+ * The agent wallet is the keypair the AI agent uses to prove its identity.
+ * Returns { txHash }.
+ */
+export async function assignAgentWallet(agentId, newWallet) {
+  const provider = await getProvider()
+  const signer = await provider.getSigner()
+  const owner = await signer.getAddress()
+
+  const deadline = Math.floor(Date.now() / 1000) + 86400 // 24 hours
+
+  // EIP-712 domain (verified from contract eip712Domain())
+  const domain = {
+    name: 'IdentityRegistry',
+    version: '1',
+    chainId: NETWORK.CHAIN_ID,
+    verifyingContract: CONTRACT_ADDRESSES.REGISTRY,
+  }
+
+  // EIP-712 typed data — AgentWallet struct
+  const types = {
+    AgentWallet: [
+      { name: 'owner', type: 'address' },
+      { name: 'agentId', type: 'uint256' },
+      { name: 'newWallet', type: 'address' },
+      { name: 'deadline', type: 'uint256' },
+    ],
+  }
+
+  const value = {
+    owner,
+    agentId,
+    newWallet,
+    deadline,
+  }
+
+  // Sign typed data
+  const signature = await signer.signTypedData(domain, types, value)
+
+  // Submit on chain
+  const contract = getRegistryContract(signer)
+  const tx = await contract.setAgentWallet(agentId, newWallet, deadline, signature)
+  const receipt = await tx.wait()
+
+  return {
+    txHash: receipt.hash,
+    blockNumber: receipt.blockNumber,
+  }
+}
+
+/**
  * Sign the persona name with the user's wallet (proves ownership).
  * Returns the signature.
  */

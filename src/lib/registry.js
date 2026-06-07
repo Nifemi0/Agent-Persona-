@@ -116,7 +116,7 @@ export async function signPersonaName(provider, name) {
  * Upload ERC-8004 metadata to IPFS via Pinata.
  * Returns { cid, gatewayUrl, metadata }.
  */
-export async function uploadMetadata(name, address, signature, website, twitter, github) {
+export async function uploadMetadata(name, address, signature, website, twitter, github, bio) {
   const res = await fetch('/api/upload', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -124,7 +124,7 @@ export async function uploadMetadata(name, address, signature, website, twitter,
       name,
       address,
       signature,
-      description: `On-chain AI agent persona: ${name}`,
+      description: bio || `On-chain AI agent persona: ${name}`,
       website: website || '',
       twitter: twitter || '',
       github: github || '',

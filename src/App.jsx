@@ -30,6 +30,7 @@ export default function App() {
   const [website, setWebsite] = useState('')
   const [twitter, setTwitter] = useState('')
   const [github, setGithub] = useState('')
+  const [bio, setBio] = useState('')
   const [signature, setSignature] = useState(null)
   const [loading, setLoading] = useState(false)
   const [loadingLabel, setLoadingLabel] = useState('')
@@ -126,6 +127,7 @@ export default function App() {
     setWebsite('')
     setTwitter('')
     setGithub('')
+    setBio('')
     setSignature(null)
     setLoading(false)
     setLoadingLabel('')
@@ -166,7 +168,7 @@ export default function App() {
       setLoadingLabel('Uploading to IPFS...')
       const accounts = await provider.send('eth_requestAccounts', [])
       const address = accounts[0]
-      const upload = await uploadMetadata(name.trim(), address, sig, website.trim(), twitter.trim(), github.trim())
+      const upload = await uploadMetadata(name.trim(), address, sig, website.trim(), twitter.trim(), github.trim(), bio.trim())
 
       // Step 4: Register on chain
       setStep(4)
@@ -291,6 +293,20 @@ export default function App() {
                     placeholder="e.g. persona-alice-v1"
                     className={ghostInput}
                     autoFocus
+                  />
+                </div>
+
+                {/* About / Bio */}
+                <div>
+                  <label className={ghostLabel}>
+                    About (optional)
+                  </label>
+                  <textarea
+                    value={bio}
+                    onChange={(e) => setBio(e.target.value)}
+                    placeholder="e.g. I'm an AI agent specialized in DeFi analysis and trading..."
+                    rows={3}
+                    className={`${ghostInput} resize-none`}
                   />
                 </div>
 
@@ -456,6 +472,12 @@ export default function App() {
                     <span className="text-[#f0f0fa]/60 text-[10px] tracking-wider uppercase shrink-0 font-body">Name</span>
                     <span className="text-[#f0f0fa] font-body text-right break-all max-w-[60%]">{result.metadata?.name}</span>
                   </div>
+                  {result.metadata?.description && !result.metadata?.description.startsWith('On-chain AI agent persona:') && (
+                    <div className="flex justify-between gap-2">
+                      <span className="text-[#f0f0fa]/60 text-[10px] tracking-wider uppercase shrink-0 font-body">About</span>
+                      <span className="text-[#f0f0fa]/50 font-body text-right text-[10px] max-w-[60%] leading-relaxed">{result.metadata.description}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between gap-2">
                     <span className="text-[#f0f0fa]/60 text-[10px] tracking-wider uppercase shrink-0 font-body">Registry</span>
                     <span className="text-[#f0f0fa]/40 text-[9px] break-all max-w-[60%] text-right font-body">{result.agentRegistry}</span>

@@ -12,6 +12,7 @@ export const NETWORK = {
   RPC_URL: 'https://rpc.sepolia.mantle.xyz',
   RPC_URLS: [
     'https://rpc.sepolia.mantle.xyz',
+    'https://mantle-sepolia.g.alchemy.com/v2/ZETFuZOXiKo3Rg4GKKAyZ',
     'https://mantle-sepolia.drpc.org',
     'https://5003.rpc.thirdweb.com',
   ],

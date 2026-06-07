@@ -133,6 +133,154 @@ The ERC-8004 standard also defines a Reputation Registry and Validation Registry
 
 ---
 
+## Agent Setup Guide
+
+How to make an actual AI agent use its assigned wallet to prove its identity.
+
+### 1. Generate a Keypair for Your Agent
+
+Any EVM wallet keypair works. Generate one:
+
+```bash
+# Using Foundry (cast)
+cast wallet new
+
+# Using Node.js
+node -e "const w = require('ethers').Wallet.createRandom(); console.log('Address:', w.address); console.log('Private key:', w.privateKey);"
+```
+
+Output example:
+```
+Address: 0xAbC123...DeF456
+Private key: 0x123abc...789def
+```
+
+### 2. Assign It via the dApp
+
+1. Register your agent (Steps 1-5)
+2. On the success screen, scroll to **Agent Wallet** → click **Assign Agent Wallet**
+3. Paste the `0xAbC123...DeF456` address → click **Confirm**
+4. MetaMask pops → sign the EIP-712 permit → confirm the tx
+
+Chain now stores: `getAgentWallet(2) → 0xAbC123...DeF456`
+
+### 3. Agent Boots With Its Private Key
+
+Inside your agent's startup code:
+
+```javascript
+import { ethers } from 'ethers'
+
+// The agent's assigned keypair (keep this secret!)
+const AGENT_PRIVATE_KEY = '0x123abc...789def'
+const agentWallet = new ethers.Wallet(AGENT_PRIVATE_KEY)
+const AGENT_ID = 2 // your agent's ID from registration
+
+// Optional: persist agent info as JSON config
+const agentConfig = {
+  agentId: AGENT_ID,
+  registryAddress: '0xCd2A74Cff974B2B962A5AA46D3aBe3F7b137509D',
+  rpcUrl: 'https://rpc.sepolia.mantle.xyz',
+  walletAddress: agentWallet.address,
+}
+```
+
+### 4. Agent Proves Its Identity (to Other Agents)
+
+When another agent asks "who are you?", sign a message:
+
+```javascript
+/**
+ * Generate an identity proof — signed payload proving
+ * this agent controls its registered wallet.
+ */
+function createIdentityProof(agentWallet, agentId) {
+  const payload = {
+    agentId,
+    action: 'identify',
+    timestamp: Math.floor(Date.now() / 1000),
+    nonce: ethers.hexlify(ethers.randomBytes(16)),
+  }
+
+  const message = JSON.stringify(payload)
+  const signature = agentWallet.signMessageSync(message)
+
+  return { payload, signature }
+}
+
+// Example usage
+const proof = createIdentityProof(agentWallet, AGENT_ID)
+// Send { payload, signature } to the verifier
+```
+
+### 5. Verifier Checks the Proof (Any Agent or dApp)
+
+No server needed — pure on-chain lookup + signature recovery:
+
+```javascript
+import { ethers } from 'ethers'
+
+const REGISTRY_ADDRESS = '0xCd2A74Cff974B2B962A5AA46D3aBe3F7b137509D'
+const RPC_URL = 'https://rpc.sepolia.mantle.xyz'
+
+const ABI = [
+  'function ownerOf(uint256) view returns (address)',
+  'function getAgentWallet(uint256) view returns (address)',
+]
+
+async function verifyAgentIdentity(proof) {
+  const provider = new ethers.JsonRpcProvider(RPC_URL)
+  const registry = new ethers.Contract(REGISTRY_ADDRESS, ABI, provider)
+
+  const { payload, signature } = proof
+
+  // 1. Recover the signer from the signature
+  const message = JSON.stringify(payload)
+  const signerAddr = ethers.verifyMessage(message, signature)
+
+  // 2. Look up the assigned wallet on chain
+  const registeredWallet = await registry.getAgentWallet(payload.agentId)
+
+  // 3. Check owner of the agent
+  const owner = await registry.ownerOf(payload.agentId)
+
+  return {
+    isValid: signerAddr.toLowerCase() === registeredWallet.toLowerCase(),
+    agentId: payload.agentId,
+    owner,
+    agentWallet: registeredWallet,
+    signer: signerAddr,
+    message: payload,
+  }
+}
+
+// Usage
+const proof = getProofFromAgent() // received over the wire
+const result = await verifyAgentIdentity(proof)
+
+if (result.isValid) {
+  console.log(`✅ Agent #${result.agentId} is real. Owner: ${result.owner}`)
+} else {
+  console.log('❌ Identity verification failed')
+}
+```
+
+### 6. Trust Flow (Summary)
+
+```
+Agent B                          Verifier (Agent A or dApp)
+─────────                        ──────────────────────────
+                                 1. Asks B: "Identify yourself"
+2. Signs payload with its
+   assigned wallet private key
+3. Sends { payload, signature }
+                                 4. ecrecover(payload, signature) → signer
+                                 5. getAgentWallet(B.agentId) → on-chain wallet
+                                 6. signer == on-chain wallet? ✅ Trust
+```
+
+---
+
 ## How to Use
 
 ### Online Demo

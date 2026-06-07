@@ -24,50 +24,62 @@ Without identity, agents are ephemeral — indistinguishable, non-reputable, unt
 
 ## What It Does
 
-Register your AI agent's identity on Mantle in one click:
+Register your AI agent's identity on Mantle Sepolia with a visible 5-step flow:
 
-1. **Sign** — prove wallet ownership with a single signature
-2. **Upload** — agent metadata (name, endpoints, social links) goes to IPFS
-3. **Register** — on-chain mint of an ERC-8004 soulbound identity token
-4. **Verify** — any agent can independently verify another agent's identity via on-chain lookup + signature recovery
+```
+[1: Define] → [2: Sign] → [3: Upload] → [4: Register] → [5: Done]
+```
+
+| Step | What happens |
+|---|---|
+| **① Define** | Enter agent name + optional social links (website, Twitter, GitHub) |
+| **② Sign** | MetaMask pops to sign the name (free, no gas) |
+| **③ Upload** | Persona metadata auto-uploaded to IPFS via Pinata |
+| **④ Register** | ERC-8004 `register(string)` tx submitted to Mantle Sepolia |
+| **⑤ Done** | Agent ID, tx details, reputation placeholders shown |
+
+After registration, you can **assign an agent wallet** — an EIP-712 signed permit that links a keypair to the agent, enabling cryptographic identity proofs.
 
 No centralized server. No gatekeeper. No fake badges.
+
+## Live Demo
+
+👉 **[agent-persona-neon.vercel.app](https://agent-persona-neon.vercel.app)**
 
 ## Core Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                                                             │
+┌──────────────────────────────────────────────────────────────┐
+│                                                              │
 │   User Wallet (MetaMask)                                     │
 │       │                                                     │
-│       │ sign | register                                      │
+│       │ sign | EIP-712 | register                            │
 │       ▼                                                     │
 │   ┌─────────────────┐     ┌───────────────────┐             │
-│   │   Vite Frontend  │────▶│   Vite Middleware  │            │
-│   │   (React +       │     │   /api/upload      │            │
-│   │    ethers.js)    │     └────────┬──────────┘             │
-│   └─────────────────┘              │                        │
-│            │                       │ IPFS add                │
+│   │  Vite Frontend   │────▶│  /api/upload       │            │
+│   │  (React +        │     │  (Vercel serverless)│           │
+│   │   ethers.js)     │     └────────┬───────────┘             │
+│   └─────────────────┘              │                         │
+│            │                       │ Pinata API               │
 │            │ register(agentURI)    ▼                          │
-│            │               ┌──────────────┐                   │
-│            └──────────────▶│ Local IPFS    │                  │
-│                            │ Daemon        │                  │
-│                            └──────────────┘                   │
+│            │               ┌────────────────┐                 │
+│            └──────────────▶│  IPFS (Pinata)  │                │
+│                            └────────────────┘                 │
 │                                    │                          │
 │                                    ▼                          │
-│   ┌─────────────────────────────────────────────────────┐     │
-│   │           Mantle Sepolia (Chain ID: 5003)            │     │
-│   │  ┌───────────────────────────────────────────────┐  │     │
-│   │  │ IdentityRegistry (ERC-721 URIStorage)          │  │     │
-│   │  │                                               │  │     │
-│   │  │  Agent #1: {owner, tokenURI → IPFS,           │  │     │
-│   │  │            agentWallet, metadata}              │  │     │
-│   │  │  Agent #2: {owner, tokenURI → IPFS, ...}      │  │     │
-│   │  │  ...                                          │  │     │
-│   │  └───────────────────────────────────────────────┘  │     │
-│   └─────────────────────────────────────────────────────┘     │
-│                                                             │
-└─────────────────────────────────────────────────────────────┘
+│   ┌──────────────────────────────────────────────────────┐    │
+│   │           Mantle Sepolia (Chain ID: 5003)             │    │
+│   │  ┌────────────────────────────────────────────────┐  │    │
+│   │  │ IdentityRegistry (ERC-721 URIStorage)           │  │    │
+│   │  │                                                │  │    │
+│   │  │  Agent #1: {owner, tokenURI → IPFS,            │  │    │
+│   │  │            agentWallet, metadata}               │  │    │
+│   │  │  Agent #2: {owner, tokenURI → IPFS, ...}       │  │    │
+│   │  │  ...                                           │  │    │
+│   │  └────────────────────────────────────────────────┘  │    │
+│   └──────────────────────────────────────────────────────┘    │
+│                                                              │
+└──────────────────────────────────────────────────────────────┘
 ```
 
 ### Contracts
@@ -78,9 +90,6 @@ No centralized server. No gatekeeper. No fake badges.
 
 ### Deployer
 `0xCbe7F5506A373d8aD8142f76Bb9d7fA6d609008C`
-
-### Test Token
-- **Agent #1** — `ipfs://test-cid` (deployer-owned)
 
 ---
 
@@ -116,53 +125,64 @@ The ERC-8004 standard also defines a Reputation Registry and Validation Registry
 
 1. **Agent A finds Agent B** in the registry (by name or agent ID)
 2. **A calls `ownerOf(B.agentId)`** → gets B's wallet address
-3. **A calls `tokenURI(B.agentId)`** → gets B's IPFS URI
-4. **A fetches B's registration file** from IPFS → finds B's signed message
-5. **A recovers the signing wallet** from the signature → `ecrecover(hash, signature)`
-6. **If recovered wallet == owner** → B controls that identity
-
-**Result:** Cryptographic trust, no server, no gatekeeper. Agent A independently verifies Agent B.
+3. **A calls `getAgentWallet(B.agentId)`** → gets B's assigned agent wallet
+4. **A calls `tokenURI(B.agentId)`** → gets B's IPFS metadata
+5. **B signs a message** with its agent wallet → sends to A
+6. **A verifies** `ecrecover(message, signature) == getAgentWallet(B.agentId)`
+7. **Trust established** ✅ — cryptographic, no server, no gatekeeper
 
 ---
 
 ## How to Use
 
 ### Online Demo
-👉 **[https://found-toxic-caribbean-trim.trycloudflare.com](https://found-toxic-caribbean-trim.trycloudflare.com)**
+👉 **[agent-persona-neon.vercel.app](https://agent-persona-neon.vercel.app)**
 
+#### Register an Agent
 1. Connect MetaMask (Mantle Sepolia network)
-2. Enter agent name + optional endpoints (website, Twitter, GitHub)
-3. Click **"Register Agent"**
-4. Sign the message + confirm the transaction
-5. Done — your agent has a verifiable on-chain identity
+2. **Step 1:** Enter agent name + optional social links → click "Next — Sign"
+3. **Step 2:** Review the message to sign → click "Sign with MetaMask" (free, no gas)
+4. **Step 3-4:** Watch auto-progress: Upload to IPFS → Register on chain
+5. **Step 5:** Done — agent ID, tx details, and reputation placeholder
 
-### Verify an Agent
+#### Assign an Agent Wallet
+After registration, scroll to the **Agent Wallet** section:
+1. Click "Assign Agent Wallet"
+2. Paste the agent's wallet address (`0x...`)
+3. Click Confirm → MetaMask EIP-712 signature popup
+4. Confirm the tx → wallet is linked to the agent
+
+#### Verify an Agent
 1. Switch to **"Verify Agent"** tab
-2. Search by name (searches all agents) or by agent ID (direct lookup)
+2. Search **by name** (searches all agents) or **by agent ID** (direct lookup)
 3. View owner, payment wallet, metadata, and ERC-8004 compliance info
 
 ### From the CLI
+
 ```bash
 # Register an agent
-cast send $REGISTRY "register(string)" "ipfs://your-metadata" \
+cast send $REGISTRY "register(string)" "ipfs://your-metadata-cid" \
   --rpc-url https://rpc.sepolia.mantle.xyz \
   --private-key $KEY
 
-# Look up an agent
+# Look up agent owner
 cast call $REGISTRY "ownerOf(uint256)(address)" 1 \
   --rpc-url https://rpc.sepolia.mantle.xyz
 
-# Get agent URI
+# Get agent metadata URI
 cast call $REGISTRY "tokenURI(uint256)(string)" 1 \
   --rpc-url https://rpc.sepolia.mantle.xyz
 
-# Check agent wallet
+# Check assigned agent wallet
 cast call $REGISTRY "getAgentWallet(uint256)(address)" 1 \
   --rpc-url https://rpc.sepolia.mantle.xyz
 
 # Total registered agents
 cast call $REGISTRY "totalSupply()(uint256)" \
   --rpc-url https://rpc.sepolia.mantle.xyz
+
+# Assign agent wallet (requires owner's EIP-712 signature)
+# Use the frontend UI for this — it handles typed signing
 ```
 
 ---
@@ -187,36 +207,41 @@ Get free testnet MNT from the [Mantle Sepolia Faucet](https://faucet.sepolia.man
 |---|---|
 | **Smart Contract** | Solidity 0.8.19, OpenZeppelin v5.6.1, Foundry |
 | **Blockchain** | Mantle Sepolia (Chain ID: 5003) |
-| **Frontend** | React, Vite, Tailwind v4, shadcn/ui |
-| **Web3** | ethers.js v6, MetaMask |
-| **Storage** | Local IPFS daemon (pinned) |
+| **Frontend** | React, Vite, Tailwind v4, Orbitron + JetBrains Mono |
+| **Web3** | ethers.js v6, MetaMask, EIP-712 typed signing |
+| **Storage** | IPFS via Pinata API (serverless upload function) |
+| **Deployment** | Vercel (auto-deploy from GitHub master) |
 | **Standard** | ERC-8004 (draft), ERC-721, EIP-712 |
-| **Tunnel** | Cloudflare Tunnel (demo access) |
+| **Theme** | Mission-control aesthetic: pure black, spectral white, ghost borders |
 
 ---
 
 ## Project Structure
 
 ```
-mantle-persona-registry/
-├── contracts/              # Contract sources (symlinked to src/)
-├── src/
+agent-persona/
+├── src/                        # React frontend
+│   ├── App.jsx                 # Main app with 5-step wizard + verify
+│   ├── main.jsx                # Entry point
+│   ├── index.css               # Tailwind v4 + mission-control theme
+│   ├── lib/
+│   │   ├── registry.js         # ethers.js contract interface + Pinata upload
+│   │   └── contract-addresses.js
+│   └── components/
+│       ├── Landing.jsx         # Landing page (mobile responsive)
+│       ├── Header.jsx          # Top bar (PR logo + network)
+│       ├── WalletInfo.jsx      # Wallet connect/disconnect/chain info
+│       └── StepIndicator.jsx   # 5-step wizard progress indicator
+├── api/upload.js               # Vercel serverless: Pinata IPFS upload
+├── vite-plugin-ipfs-upload.js  # Dev server Pinata upload plugin
+├── vercel.json                 # Vercel deployment config
+├── package.json                # Vite + React dependencies
+├── contracts/                  # Contract sources (symlinked to src/)
 │   └── IdentityRegistry.sol    # ERC-8004 compliant registry
 ├── scripts/
-│   └── deploy_mantle_sepolia.js   # Deploy script
-├── web/
-│   ├── src/
-│   │   ├── App.jsx              # Main app with wallet + registration
-│   │   ├── lib/
-│   │   │   ├── registry.js      # ethers.js contract interface
-│   │   │   └── contract-addresses.js  # Deployed addresses
-│   │   ├── components/          # React components
-│   │   └── plugins/             # Vite middleware (IPFS upload)
-│   └── vite.config.js
-├── offchain/cli/           # CLI tools (optional)
-├── out/                    # Build artifacts
-├── lib/                    # Dependencies (forge-std, OZ)
-└── foundry.toml
+│   └── deploy_mantle_sepolia.js
+├── foundry.toml
+└── README.md
 ```
 
 ---
@@ -227,9 +252,9 @@ mantle-persona-registry/
 # Prerequisites
 curl -L https://foundry.paradigm.xyz | bash
 
-# Clone and build
+# Clone and build contracts
 git clone <repo-url>
-cd mantle-persona-registry
+cd agent-persona
 forge build
 
 # Deploy (set PRIVATE_KEY env or .env)
@@ -239,10 +264,23 @@ forge create src/IdentityRegistry.sol:IdentityRegistry \
   --private-key $PRIVATE_KEY \
   --broadcast
 
-# Run frontend
-cd web
+# Run frontend locally
 npm install
 npm run dev
+
+# Build for production
+npm run build
+
+# Deploy to Vercel (connected to GitHub)
+git push origin master
+```
+
+### Environment Variables
+
+Set these in `.env` (local) and Vercel dashboard:
+
+```
+PINATA_JWT=your_pinata_jwt_token
 ```
 
 ---

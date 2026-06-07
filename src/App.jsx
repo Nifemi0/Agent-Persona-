@@ -83,7 +83,7 @@ export default function App() {
   const MANTLE_SEPOLIA = {
     chainId: '0x138B',
     chainName: NETWORK.NAME,
-    rpcUrls: [NETWORK.RPC_URL],
+    rpcUrls: NETWORK.RPC_URLS,
     nativeCurrency: { name: 'MNT', symbol: 'MNT', decimals: 18 },
     blockExplorerUrls: [NETWORK.EXPLORER],
   }

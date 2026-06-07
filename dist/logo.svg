@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" fill="none">
+  <rect width="400" height="400" fill="#000000"/>
+
+  <!-- Outer ring -->
+  <circle cx="200" cy="155" r="72" stroke="rgba(240,240,250,0.12)" stroke-width="1" fill="none"/>
+
+  <!-- Hexagon node -->
+  <polygon points="200,95 239,117 239,161 200,183 161,161 161,117"
+           stroke="rgba(240,240,250,0.6)" stroke-width="1.5" fill="none"/>
+  <polygon points="200,105 226,119 226,147 200,161 174,147 174,119"
+           stroke="rgba(240,240,250,0.15)" stroke-width="0.5" fill="none"/>
+
+  <!-- Center dot (agent) -->
+  <circle cx="200" cy="139" r="4" fill="#f0f0fa"/>
+
+  <!-- Connection lines (network) -->
+  <line x1="200" y1="155" x2="170" y2="180" stroke="rgba(240,240,250,0.2)" stroke-width="0.8"/>
+  <line x1="200" y1="155" x2="230" y2="180" stroke="rgba(240,240,250,0.2)" stroke-width="0.8"/>
+  <line x1="200" y1="155" x2="200" y2="190" stroke="rgba(240,240,250,0.2)" stroke-width="0.8"/>
+
+  <!-- Small connection dots -->
+  <circle cx="170" cy="180" r="2" fill="rgba(240,240,250,0.3)"/>
+  <circle cx="230" cy="180" r="2" fill="rgba(240,240,250,0.3)"/>
+  <circle cx="200" cy="190" r="2" fill="rgba(240,240,250,0.3)"/>
+
+  <!-- Fingerprint arc (identity) -->
+  <path d="M155,195 Q155,225 175,230" stroke="rgba(240,240,250,0.25)" stroke-width="1" fill="none"/>
+  <path d="M175,195 Q175,225 195,230" stroke="rgba(240,240,250,0.25)" stroke-width="1" fill="none"/>
+  <path d="M205,195 Q205,225 225,230" stroke="rgba(240,240,250,0.25)" stroke-width="1" fill="none"/>
+  <path d="M225,195 Q225,225 245,230" stroke="rgba(240,240,250,0.25)" stroke-width="1" fill="none"/>
+
+  <!-- Horizontal divider -->
+  <line x1="80" y1="260" x2="320" y2="260" stroke="rgba(240,240,250,0.08)" stroke-width="0.5"/>
+
+  <!-- Title -->
+  <text x="200" y="290" text-anchor="middle" font-family="'Orbitron','Arial Black',sans-serif"
+        font-size="17" font-weight="900" letter-spacing="5" fill="#f0f0fa">
+    AGENT IDENTITY
+  </text>
+  <text x="200" y="312" text-anchor="middle" font-family="'Orbitron','Arial Black',sans-serif"
+        font-size="9" font-weight="700" letter-spacing="6" fill="rgba(240,240,250,0.3)">
+    R E G I S T R Y
+  </text>
+
+  <!-- Subtitle line -->
+  <text x="200" y="340" text-anchor="middle" font-family="'JetBrains Mono','Courier New',monospace"
+        font-size="7" letter-spacing="3" fill="rgba(240,240,250,0.2)">
+    ERC-8004 • MANTLE SEPOLIA
+  </text>
+
+  <!-- Corner decoration lines -->
+  <line x1="40" y1="40" x2="55" y2="40" stroke="rgba(240,240,250,0.08)" stroke-width="0.5"/>
+  <line x1="40" y1="40" x2="40" y2="55" stroke="rgba(240,240,250,0.08)" stroke-width="0.5"/>
+  <line x1="360" y1="40" x2="345" y2="40" stroke="rgba(240,240,250,0.08)" stroke-width="0.5"/>
+  <line x1="360" y1="40" x2="360" y2="55" stroke="rgba(240,240,250,0.08)" stroke-width="0.5"/>
+</svg>

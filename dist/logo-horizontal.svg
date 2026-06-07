@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 60" fill="none">
+  <rect width="400" height="60" fill="#000000"/>
+
+  <!-- Small hexagon -->
+  <polygon points="28,12 40,4 52,12 52,28 40,36 28,28"
+           stroke="rgba(240,240,250,0.5)" stroke-width="1.2" fill="none"/>
+  <circle cx="40" cy="20" r="3" fill="#f0f0fa"/>
+
+  <!-- Vertical divider -->
+  <line x1="65" y1="10" x2="65" y2="50" stroke="rgba(240,240,250,0.08)" stroke-width="0.5"/>
+
+  <!-- Text -->
+  <text x="80" y="28" font-family="'Orbitron','Arial Black',sans-serif"
+        font-size="14" font-weight="900" letter-spacing="3" fill="#f0f0fa">
+    AGENT IDENTITY
+  </text>
+  <text x="80" y="44" font-family="'JetBrains Mono','Courier New',monospace"
+        font-size="8" letter-spacing="4" fill="rgba(240,240,250,0.25)">
+    REGISTRY
+  </text>
+
+  <!-- Network badge -->
+  <rect x="270" y="18" width="115" height="24" rx="0" stroke="rgba(240,240,250,0.06)" stroke-width="0.5" fill="none"/>
+  <text x="327" y="34" text-anchor="middle" font-family="'JetBrains Mono','Courier New',monospace"
+        font-size="7" letter-spacing="2" fill="rgba(240,240,250,0.15)">
+    MANTLE SEPOLIA
+  </text>
+</svg>

@@ -10,5 +10,10 @@ export const NETWORK = {
   CHAIN_ID: 5003,
   NAMESPACE: 'eip155',
   RPC_URL: 'https://rpc.sepolia.mantle.xyz',
+  RPC_URLS: [
+    'https://rpc.sepolia.mantle.xyz',
+    'https://mantle-sepolia.drpc.org',
+    'https://5003.rpc.thirdweb.com',
+  ],
   EXPLORER: 'https://sepolia.mantlescan.xyz',
 }
